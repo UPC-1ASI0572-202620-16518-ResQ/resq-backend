@@ -14,7 +14,10 @@ public interface IIamContextFacade
     /// <param name="password">The password.</param>
     /// <param name="role">The user role.</param>
     /// <returns>The user ID.</returns>
-    Task<int> CreateUser(string username, string password, Roles role);
+    /// <param name="firstName">The user's first name.</param>
+    /// <param name="lastName">The user's last name.</param>
+    /// <param name="email">The user's email.</param>
+    Task<int> CreateUser(string firstName, string lastName, string email, string username, string password, Roles role);
 
     /// <summary>
     ///     Fetches the user ID by username.

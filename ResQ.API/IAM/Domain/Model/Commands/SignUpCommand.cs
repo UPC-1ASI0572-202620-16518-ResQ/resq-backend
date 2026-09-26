@@ -5,7 +5,7 @@ namespace ResQ.API.IAM.Domain.Model.Commands;
 /// <summary>
 ///     Command used to create a new user (sign up).
 /// </summary>
-/// <param name="Username">The username for the new user.</param>
-/// <param name="Password">The plain-text password for the new user.</param>
-/// <param name="Role">The role for the new user.</param>
-public record SignUpCommand(string Username, string Password, Roles Role);
+/// <param name="FirstName">The user's first name.</param>
+/// <param name="LastName">The user's last name.</param>
+/// <param name="Email">The user's email address.</param>
+public record SignUpCommand(string FirstName, string LastName, string Email, string Username, string Password, Roles Role);

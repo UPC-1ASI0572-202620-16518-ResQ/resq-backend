@@ -19,13 +19,13 @@ public class IamContextFacade(IUserCommandService userCommandService, IUserQuery
     /// <param name="password">The password for the new user.</param>
     /// <param name="role">The role for the new user.</param>
     /// <returns>The ID of the created user, or 0 if creation failed.</returns>
-    public async Task<int> CreateUser(string username, string password, Roles role)
+    /// <param name="firstName">The user's first name.</param>
+    /// <param name="lastName">The user's last name.</param>
+    /// <param name="email">The user's email.</param>
+    public async Task<int> CreateUser(string firstName, string lastName, string email, string username, string password, Roles role)
     {
-        var signUpCommand = new SignUpCommand(username, password, role);
-        await userCommandService.Handle(signUpCommand);
-        var getUserByUsernameQuery = new GetUserByUsernameQuery(username);
-        var result = await userQueryService.Handle(getUserByUsernameQuery);
-        return result?.Id ?? 0;
+        var signUpCommand = new SignUpCommand(firstName, lastName, email, username, password, role);
+        return await userCommandService.Handle(signUpCommand);
     }
 
     /// <summary>

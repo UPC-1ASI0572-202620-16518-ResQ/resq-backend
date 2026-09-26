@@ -3,6 +3,7 @@ using ResQ.API.IAM.Domain.Services;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using ResQ.API.IAM.Interfaces.REST.Resources;
 using ResQ.API.IAM.Interfaces.REST.Transform;
+using ResQ.API.Profiles.Interfaces.ACL;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -13,7 +14,9 @@ namespace ResQ.API.IAM.Interfaces.REST;
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Available Authentication endpoints")]
-public class AuthenticationController(IUserCommandService userCommandService) : ControllerBase
+public class AuthenticationController(
+    IUserCommandService userCommandService,
+    IProfilesContextFacade profilesContextFacade) : ControllerBase
 {
     /// <summary>
     ///     Iniciar sesión (Autenticación de usuario).
@@ -60,16 +63,24 @@ public class AuthenticationController(IUserCommandService userCommandService) : 
                       "**Reglas y Validaciones:**<br>" +
                       "- <b>Username</b>: Debe ser único. Si el usuario ya existe, se rechazará la petición.<br>" +
                       "- <b>Password</b>: El sistema aplicará un algoritmo de hashing fuerte (BCrypt) antes de guardarlo en la base de datos. ¡Nunca se guarda en texto plano!<br>" +
+                      "- <b>FirstName y LastName</b>: Deben ser proporcionados para el perfil base.<br>" +
+                      "- <b>Email</b>: Debe tener un formato de correo válido (ej. texto antes y después del '@', y un dominio con punto).<br>" +
                       "- <b>Role</b>: Define el tipo de acceso en el sistema. Los roles permitidos son:<br>" +
                       "  &nbsp;&nbsp;👉 <code>citizen</code> (Ciudadano que reporta emergencias)<br>" +
                       "  &nbsp;&nbsp;👉 <code>volunteer</code> (Voluntario que atiende reportes)<br><br>" +
-                      "**Nota:** El rol debe enviarse exactamente como los valores permitidos (ignora mayúsculas/minúsculas).",
+                      "**Nota:** El rol debe enviarse exactamente como los valores permitidos (ignora mayúsculas/minúsculas).<br><br>" +
+                      "**Creación Automática:** Al registrarse exitosamente en IAM, se creará automáticamente un **Perfil de Usuario** " +
+                      "asociado con el Nombre, Apellido y Correo proporcionados.",
         OperationId = "SignUp")]
     [SwaggerResponse(StatusCodes.Status200OK, "El usuario fue creado y registrado exitosamente en la base de datos.")]
     public async Task<IActionResult> SignUp([FromBody] SignUpResource signUpResource)
     {
         var signUpCommand = SignUpCommandFromResourceAssembler.ToCommandFromResource(signUpResource);
-        await userCommandService.Handle(signUpCommand);
+        var userId = await userCommandService.Handle(signUpCommand);
+
+        // Auto-create profile in the Profiles bounded context
+        await profilesContextFacade.CreateUserProfile(userId, signUpResource.FirstName, signUpResource.LastName, signUpResource.Email);
+
         return Ok(new { message = "User created successfully" });
     }
 }

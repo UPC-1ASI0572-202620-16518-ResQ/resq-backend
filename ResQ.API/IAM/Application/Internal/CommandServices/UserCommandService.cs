@@ -41,7 +41,7 @@ public class UserCommandService(
     /// <param name="command">The sign-up command with username, password, and role.</param>
     /// <returns>A completed <see cref="Task" /> when the operation succeeds.</returns>
     /// <exception cref="Exception">Thrown when the username is already taken or creation fails.</exception>
-    public async Task Handle(SignUpCommand command)
+    public async Task<int> Handle(SignUpCommand command)
     {
         if (userRepository.ExistsByUsername(command.Username))
             throw new Exception($"Username {command.Username} is already taken");
@@ -53,6 +53,7 @@ public class UserCommandService(
         {
             await userRepository.AddAsync(user);
             await unitOfWork.CompleteAsync();
+            return user.Id;
         }
         catch (Exception e)
         {
