@@ -14,7 +14,7 @@
                 Facade for the IAM context, providing access to user-related operations.
             </summary>
         </member>
-        <member name="M:ResQ.API.IAM.Application.ACL.Services.IamContextFacade.CreateUser(System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
+        <member name="M:ResQ.API.IAM.Application.ACL.Services.IamContextFacade.CreateUser(System.String,System.String,System.String,System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
             <summary>
                 Creates a new user with the specified username, password, and role.
             </summary>
@@ -22,6 +22,9 @@
             <param name="password">The password for the new user.</param>
             <param name="role">The role for the new user.</param>
             <returns>The ID of the created user, or 0 if creation failed.</returns>
+            <param name="firstName">The user's first name.</param>
+            <param name="lastName">The user's last name.</param>
+            <param name="email">The user's email.</param>
         </member>
         <member name="M:ResQ.API.IAM.Application.ACL.Services.IamContextFacade.FetchUserIdByUsername(System.String)">
             <summary>
@@ -221,26 +224,26 @@
             <summary>
                 Command used to create a new user (sign up).
             </summary>
-            <param name="Username">The username for the new user.</param>
-            <param name="Password">The plain-text password for the new user.</param>
-            <param name="Role">The role for the new user.</param>
+            <param name="FirstName">The user's first name.</param>
+            <param name="LastName">The user's last name.</param>
+            <param name="Email">The user's email address.</param>
         </member>
-        <member name="M:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.#ctor(System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
+        <member name="M:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.#ctor(System.String,System.String,System.String,System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
             <summary>
                 Command used to create a new user (sign up).
             </summary>
-            <param name="Username">The username for the new user.</param>
-            <param name="Password">The plain-text password for the new user.</param>
-            <param name="Role">The role for the new user.</param>
+            <param name="FirstName">The user's first name.</param>
+            <param name="LastName">The user's last name.</param>
+            <param name="Email">The user's email address.</param>
         </member>
-        <member name="P:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.Username">
-            <summary>The username for the new user.</summary>
+        <member name="P:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.FirstName">
+            <summary>The user's first name.</summary>
         </member>
-        <member name="P:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.Password">
-            <summary>The plain-text password for the new user.</summary>
+        <member name="P:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.LastName">
+            <summary>The user's last name.</summary>
         </member>
-        <member name="P:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.Role">
-            <summary>The role for the new user.</summary>
+        <member name="P:ResQ.API.IAM.Domain.Model.Commands.SignUpCommand.Email">
+            <summary>The user's email address.</summary>
         </member>
         <member name="T:ResQ.API.IAM.Domain.Model.Queries.GetAllUsersQuery">
             <summary>
@@ -353,7 +356,6 @@
                 Handle a sign-up operation to create a new user.
             </summary>
             <param name="command">The sign-up command with new user data.</param>
-            <returns>A <see cref="T:System.Threading.Tasks.Task" /> that completes when the operation finishes.</returns>
         </member>
         <member name="T:ResQ.API.IAM.Domain.Services.IUserQueryService">
             <summary>
@@ -579,7 +581,7 @@
                 Interface for the IAM context facade.
             </summary>
         </member>
-        <member name="M:ResQ.API.IAM.Interfaces.ACL.IIamContextFacade.CreateUser(System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
+        <member name="M:ResQ.API.IAM.Interfaces.ACL.IIamContextFacade.CreateUser(System.String,System.String,System.String,System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
             <summary>
                 Creates a new user.
             </summary>
@@ -587,6 +589,9 @@
             <param name="password">The password.</param>
             <param name="role">The user role.</param>
             <returns>The user ID.</returns>
+            <param name="firstName">The user's first name.</param>
+            <param name="lastName">The user's last name.</param>
+            <param name="email">The user's email.</param>
         </member>
         <member name="M:ResQ.API.IAM.Interfaces.ACL.IIamContextFacade.FetchUserIdByUsername(System.String)">
             <summary>
@@ -673,16 +678,31 @@
                 Objeto que representa los datos enviados para registrar un nuevo usuario en la plataforma.
             </summary>
             <param name="Username">El nombre de usuario deseado. Debe ser único en el sistema.</param>
+            <param name="FirstName">Nombre real del usuario.</param>
+            <param name="LastName">Apellido del usuario.</param>
+            <param name="Email">Correo electrónico de contacto. Debe ser un correo electrónico válido.</param>
             <param name="Password">La contraseña en texto plano (será encriptada por el backend automáticamente).</param>
             <param name="Role">El rol asignado al usuario (acepta: "citizen" o "volunteer").</param>
         </member>
-        <member name="M:ResQ.API.IAM.Interfaces.REST.Resources.SignUpResource.#ctor(System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
+        <member name="M:ResQ.API.IAM.Interfaces.REST.Resources.SignUpResource.#ctor(System.String,System.String,System.String,System.String,System.String,ResQ.API.IAM.Domain.Model.ValueObjects.Roles)">
             <summary>
                 Objeto que representa los datos enviados para registrar un nuevo usuario en la plataforma.
             </summary>
             <param name="Username">El nombre de usuario deseado. Debe ser único en el sistema.</param>
+            <param name="FirstName">Nombre real del usuario.</param>
+            <param name="LastName">Apellido del usuario.</param>
+            <param name="Email">Correo electrónico de contacto. Debe ser un correo electrónico válido.</param>
             <param name="Password">La contraseña en texto plano (será encriptada por el backend automáticamente).</param>
             <param name="Role">El rol asignado al usuario (acepta: "citizen" o "volunteer").</param>
+        </member>
+        <member name="P:ResQ.API.IAM.Interfaces.REST.Resources.SignUpResource.FirstName">
+            <summary>Nombre real del usuario.</summary>
+        </member>
+        <member name="P:ResQ.API.IAM.Interfaces.REST.Resources.SignUpResource.LastName">
+            <summary>Apellido del usuario.</summary>
+        </member>
+        <member name="P:ResQ.API.IAM.Interfaces.REST.Resources.SignUpResource.Email">
+            <summary>Correo electrónico de contacto. Debe ser un correo electrónico válido.</summary>
         </member>
         <member name="P:ResQ.API.IAM.Interfaces.REST.Resources.SignUpResource.Username">
             <summary>El nombre de usuario deseado. Debe ser único en el sistema.</summary>
@@ -791,6 +811,88 @@
             </summary>
             <param name="role">El rol por el cual filtrar a los usuarios (ej: citizen, volunteer).</param>
             <returns>Retorna una colección de <see cref="T:ResQ.API.IAM.Interfaces.REST.Resources.UserResource" /> que pertenecen al rol especificado.</returns>
+        </member>
+        <member name="T:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile">
+            <summary>
+                Aggregate Root that represents a User Profile.
+                The Id of this aggregate is tightly coupled with the IAM User Id.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile.Id">
+            <summary>
+                The unique identifier for the User Profile. It matches the IAM User Id.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile.Name">
+            <summary>
+                The full name of the user.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile.ContactInfo">
+            <summary>
+                The contact information of the user.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile.Preferences">
+            <summary>
+                The preferences of the user.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile.#ctor(System.Int32,System.String,System.String,System.String)">
+            <summary>
+                Initializes a new instance of the <see cref="T:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile" /> class.
+            </summary>
+            <param name="id">The Id matching the IAM User.</param>
+            <param name="firstName">The user's first name.</param>
+            <param name="lastName">The user's last name.</param>
+            <param name="email">The user's email address.</param>
+        </member>
+        <member name="M:ResQ.API.Profiles.Domain.Model.Aggregates.UserProfile.UpdateContactInfo(System.String,System.String)">
+            <summary>
+                Updates the contact information for the user profile.
+            </summary>
+            <param name="email">The new email address.</param>
+            <param name="phoneNumber">The new phone number.</param>
+        </member>
+        <member name="T:ResQ.API.Profiles.Domain.Model.ValueObjects.ContactInformation">
+            <summary>
+                Value Object that centralizes the communication channels of a user.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Profiles.Domain.Model.ValueObjects.ContactInformation.#ctor(System.String,System.String)">
+            <summary>
+                Value Object that centralizes the communication channels of a user.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Profiles.Domain.Model.ValueObjects.ContactInformation.HasValidPhone">
+            <summary>
+                Checks if the contact information has a valid phone number.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Profiles.Domain.Model.ValueObjects.FullName">
+            <summary>
+                Value Object that encapsulates the first and last name of a user.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Profiles.Domain.Model.ValueObjects.FullName.#ctor(System.String,System.String)">
+            <summary>
+                Value Object that encapsulates the first and last name of a user.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Profiles.Domain.Model.ValueObjects.UserPreferences">
+            <summary>
+                Value Object for specific user preferences in the platform.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Profiles.Domain.Model.ValueObjects.UserPreferences.#ctor(System.String,System.Boolean)">
+            <summary>
+                Value Object for specific user preferences in the platform.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Profiles.Domain.Model.ValueObjects.UserPreferences.IsSmsEnabled">
+            <summary>
+                Checks if SMS alerts are enabled.
+            </summary>
         </member>
         <member name="T:ResQ.API.Shared.Domain.Model.Events.IEvent">
             <summary>

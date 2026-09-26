@@ -1,4 +1,5 @@
 using ResQ.API.IAM.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using ResQ.API.Profiles.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +48,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         
         // IAM Context
         builder.ApplyIamConfiguration();
+        
+        // User Context
+        builder.ApplyUserConfiguration();
         
         // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();

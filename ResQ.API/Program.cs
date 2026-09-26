@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ResQ.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using ResQ.API.Profiles.Application.Internal.OutboundServices;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Extensions;
 using ResQ.API.Shared.Infrastructure.Documentation.OpenApi.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration;
@@ -38,6 +39,9 @@ builder.AddSharedContextServices();
 
 // IAM Bounded Context Services
 builder.AddIamContextServices();
+
+// User Bounded Context Services
+builder.Services.AddUserContextServices();
 
 // Mediator Configuration
 builder.AddCortexConfigurationServices();

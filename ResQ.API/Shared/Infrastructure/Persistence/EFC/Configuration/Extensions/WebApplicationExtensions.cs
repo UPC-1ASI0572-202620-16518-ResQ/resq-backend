@@ -1,4 +1,4 @@
-﻿namespace ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
+namespace ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 
 public static class WebApplicationExtensions
 {
