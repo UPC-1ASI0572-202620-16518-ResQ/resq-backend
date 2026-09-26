@@ -14,11 +14,11 @@
           "Humanizer": "2.14.1",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.10",
           "Microsoft.AspNetCore.OpenApi": "9.0.10",
-          "Microsoft.EntityFrameworkCore": "10.0.12",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.12",
+          "Microsoft.EntityFrameworkCore": "10.0.9",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.9",
           "Microsoft.EntityFrameworkCore.Relational.Design": "1.1.6",
           "Microsoft.IdentityModel.Tokens": "8.14.0",
-          "MySql.EntityFrameworkCore": "9.0.9",
+          "MySql.EntityFrameworkCore": "10.0.9",
           "Swashbuckle.AspNetCore": "9.0.6",
           "Swashbuckle.AspNetCore.Annotations": "9.0.6",
           "System.IdentityModel.Tokens.Jwt": "8.14.0"
@@ -56,7 +56,7 @@
       },
       "EntityFrameworkCore.CreatedUpdatedDate/8.0.0": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.12"
+          "Microsoft.EntityFrameworkCore": "10.0.9"
         },
         "runtime": {
           "lib/net8.0/EntityFrameworkCore.CreatedUpdatedDate.dll": {
@@ -65,11 +65,11 @@
           }
         }
       },
-      "Google.Protobuf/3.32.0": {
+      "Google.Protobuf/3.35.0": {
         "runtime": {
           "lib/net5.0/Google.Protobuf.dll": {
-            "assemblyVersion": "3.32.0.0",
-            "fileVersion": "3.32.0.0"
+            "assemblyVersion": "3.35.0.0",
+            "fileVersion": "3.35.0.0"
           }
         }
       },
@@ -663,39 +663,39 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore/10.0.12": {
+      "Microsoft.EntityFrameworkCore/10.0.9": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.12"
+          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.9"
         },
         "runtime": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.dll": {
-            "assemblyVersion": "10.0.12.0",
-            "fileVersion": "10.0.1226.42308"
+            "assemblyVersion": "10.0.9.0",
+            "fileVersion": "10.0.926.27113"
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Abstractions/10.0.12": {
+      "Microsoft.EntityFrameworkCore.Abstractions/10.0.9": {
         "runtime": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll": {
-            "assemblyVersion": "10.0.12.0",
-            "fileVersion": "10.0.1226.42308"
+            "assemblyVersion": "10.0.9.0",
+            "fileVersion": "10.0.926.27113"
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Relational/10.0.12": {
+      "Microsoft.EntityFrameworkCore.Relational/10.0.9": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.12"
+          "Microsoft.EntityFrameworkCore": "10.0.9"
         },
         "runtime": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll": {
-            "assemblyVersion": "10.0.12.0",
-            "fileVersion": "10.0.1226.42308"
+            "assemblyVersion": "10.0.9.0",
+            "fileVersion": "10.0.926.27113"
           }
         }
       },
       "Microsoft.EntityFrameworkCore.Relational.Design/1.1.6": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.12"
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.9"
         },
         "runtime": {
           "lib/netstandard1.3/Microsoft.EntityFrameworkCore.Relational.Design.dll": {
@@ -784,19 +784,19 @@
           }
         }
       },
-      "MySql.Data/9.5.0": {
+      "MySql.Data/26.7.0": {
         "dependencies": {
           "BouncyCastle.Cryptography": "2.6.2",
-          "Google.Protobuf": "3.32.0",
+          "Google.Protobuf": "3.35.0",
           "K4os.Compression.LZ4.Streams": "1.3.8",
-          "System.Configuration.ConfigurationManager": "8.0.0",
-          "System.Security.Permissions": "8.0.0",
-          "ZstdSharp.Port": "0.8.6"
+          "System.Configuration.ConfigurationManager": "10.0.8",
+          "System.Security.Permissions": "10.0.8",
+          "ZstdSharp.Port": "0.8.8"
         },
         "runtime": {
-          "lib/net9.0/MySql.Data.dll": {
-            "assemblyVersion": "9.5.0.0",
-            "fileVersion": "9.5.0.0"
+          "lib/net10.0/MySql.Data.dll": {
+            "assemblyVersion": "26.7.0.0",
+            "fileVersion": "26.7.0.0"
           }
         },
         "runtimeTargets": {
@@ -827,16 +827,16 @@
           }
         }
       },
-      "MySql.EntityFrameworkCore/9.0.9": {
+      "MySql.EntityFrameworkCore/10.0.9": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.12",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.12",
-          "MySql.Data": "9.5.0"
+          "Microsoft.EntityFrameworkCore": "10.0.9",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.9",
+          "MySql.Data": "26.7.0"
         },
         "runtime": {
-          "lib/net9.0/MySql.EntityFrameworkCore.dll": {
-            "assemblyVersion": "9.5.0.0",
-            "fileVersion": "9.5.0.0"
+          "lib/net10.0/MySql.EntityFrameworkCore.dll": {
+            "assemblyVersion": "26.7.0.0",
+            "fileVersion": "26.7.0.0"
           }
         }
       },
@@ -899,14 +899,14 @@
           }
         }
       },
-      "System.Configuration.ConfigurationManager/8.0.0": {
+      "System.Configuration.ConfigurationManager/10.0.8": {
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "8.0.0"
+          "System.Security.Cryptography.ProtectedData": "10.0.8"
         },
         "runtime": {
-          "lib/net8.0/System.Configuration.ConfigurationManager.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53103"
+          "lib/net10.0/System.Configuration.ConfigurationManager.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.826.23019"
           }
         }
       },
@@ -922,46 +922,46 @@
           }
         }
       },
-      "System.Security.Cryptography.ProtectedData/8.0.0": {
+      "System.Security.Cryptography.ProtectedData/10.0.8": {
         "runtime": {
-          "lib/net8.0/System.Security.Cryptography.ProtectedData.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53103"
+          "lib/net10.0/System.Security.Cryptography.ProtectedData.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.826.23019"
           }
         }
       },
-      "System.Security.Permissions/8.0.0": {
+      "System.Security.Permissions/10.0.8": {
         "dependencies": {
-          "System.Windows.Extensions": "8.0.0"
+          "System.Windows.Extensions": "10.0.8"
         },
         "runtime": {
-          "lib/net8.0/System.Security.Permissions.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53103"
+          "lib/net10.0/System.Security.Permissions.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.826.23019"
           }
         }
       },
-      "System.Windows.Extensions/8.0.0": {
+      "System.Windows.Extensions/10.0.8": {
         "runtime": {
-          "lib/net8.0/System.Windows.Extensions.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53103"
+          "lib/net10.0/System.Windows.Extensions.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.826.23019"
           }
         },
         "runtimeTargets": {
-          "runtimes/win/lib/net8.0/System.Windows.Extensions.dll": {
+          "runtimes/win/lib/net10.0/System.Windows.Extensions.dll": {
             "rid": "win",
             "assetType": "runtime",
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53103"
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.826.23019"
           }
         }
       },
-      "ZstdSharp.Port/0.8.6": {
+      "ZstdSharp.Port/0.8.8": {
         "runtime": {
           "lib/net9.0/ZstdSharp.dll": {
-            "assemblyVersion": "0.8.6.0",
-            "fileVersion": "0.8.6.0"
+            "assemblyVersion": "0.8.8.0",
+            "fileVersion": "0.8.8.0"
           }
         }
       }
@@ -1001,12 +1001,12 @@
       "path": "entityframeworkcore.createdupdateddate/8.0.0",
       "hashPath": "entityframeworkcore.createdupdateddate.8.0.0.nupkg.sha512"
     },
-    "Google.Protobuf/3.32.0": {
+    "Google.Protobuf/3.35.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-fsKxV5bhcvXmZi+cUo5+IxzRMBHwHeFO8G5utNa9f+Mu37kmfy8JcUVvWPt4cX7EuQWAjjHUjZqVl7nGSTRHRg==",
-      "path": "google.protobuf/3.32.0",
-      "hashPath": "google.protobuf.3.32.0.nupkg.sha512"
+      "sha512": "sha512-OrUZCUzBXqdSmsQSWp/EPeINjOBcMU+PrZEJegw0aLgOGFHZ9ZI37X/SFrIxo8C9ghKynaKpPr3BVPc4EujWYg==",
+      "path": "google.protobuf/3.35.0",
+      "hashPath": "google.protobuf.3.35.0.nupkg.sha512"
     },
     "Humanizer/2.14.1": {
       "type": "package",
@@ -1393,26 +1393,26 @@
       "path": "microsoft.aspnetcore.openapi/9.0.10",
       "hashPath": "microsoft.aspnetcore.openapi.9.0.10.nupkg.sha512"
     },
-    "Microsoft.EntityFrameworkCore/10.0.12": {
+    "Microsoft.EntityFrameworkCore/10.0.9": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-e7OrVN8U5yr4kuwdTHWBHGVQIVsGfMkAr0Ej1/BnrS989Q0XBVANpIzNZ2bc1GvMZ0/XwMt5InTnmKskxGy99Q==",
-      "path": "microsoft.entityframeworkcore/10.0.12",
-      "hashPath": "microsoft.entityframeworkcore.10.0.12.nupkg.sha512"
+      "sha512": "sha512-tu85SRzOT021V7EQlViCiAE7TqldVn469Y6lt5TEn/+XC4/MeNCHgMRSxqYuWqvF4zAQZUhCmtNEZuM3ss4LeA==",
+      "path": "microsoft.entityframeworkcore/10.0.9",
+      "hashPath": "microsoft.entityframeworkcore.10.0.9.nupkg.sha512"
     },
-    "Microsoft.EntityFrameworkCore.Abstractions/10.0.12": {
+    "Microsoft.EntityFrameworkCore.Abstractions/10.0.9": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-kDrux7T6C3V/YYYe2LXr7x6AEsVyq5Y2YoTE9er1SwbDtap3z1g8RgxNh5eKQVyB4T+DKvBBJ4Ezd/VZzJQJZg==",
-      "path": "microsoft.entityframeworkcore.abstractions/10.0.12",
-      "hashPath": "microsoft.entityframeworkcore.abstractions.10.0.12.nupkg.sha512"
+      "sha512": "sha512-GRMaiPkqYna/gCsyDffYDWmefGPC3hDrdMw+2rrGcQwhs6uZOsaMQXMJnoXQ35tx9SkBV2ieRRU9N/jLOO6BZw==",
+      "path": "microsoft.entityframeworkcore.abstractions/10.0.9",
+      "hashPath": "microsoft.entityframeworkcore.abstractions.10.0.9.nupkg.sha512"
     },
-    "Microsoft.EntityFrameworkCore.Relational/10.0.12": {
+    "Microsoft.EntityFrameworkCore.Relational/10.0.9": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-OiHmr8XzX96dbgMsYGe8qoqg4KxibdZG2r0QUVJBGktFInOp8IrABe8jvcbo5hrqeWfbwpK7fCEBiEPbY/ik4A==",
-      "path": "microsoft.entityframeworkcore.relational/10.0.12",
-      "hashPath": "microsoft.entityframeworkcore.relational.10.0.12.nupkg.sha512"
+      "sha512": "sha512-dEoyYKgiaZHHgOFm1WMWm1sFEsEuhPWufX4L9PekKtqd/RaIcPjkCjvbrVvJtApErb5wPSJhYvnTlxhH+p9h2g==",
+      "path": "microsoft.entityframeworkcore.relational/10.0.9",
+      "hashPath": "microsoft.entityframeworkcore.relational.10.0.9.nupkg.sha512"
     },
     "Microsoft.EntityFrameworkCore.Relational.Design/1.1.6": {
       "type": "package",
@@ -1477,19 +1477,19 @@
       "path": "microsoft.openapi/1.6.25",
       "hashPath": "microsoft.openapi.1.6.25.nupkg.sha512"
     },
-    "MySql.Data/9.5.0": {
+    "MySql.Data/26.7.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-pbIrDv7vuvMlok6ldjliFOeb5fpGofAInUhG/8LraQBqT2a2xZTcAVjm/GyfZ9ZyjZeHJLWuMRbe0uI98sCoWg==",
-      "path": "mysql.data/9.5.0",
-      "hashPath": "mysql.data.9.5.0.nupkg.sha512"
+      "sha512": "sha512-WXk00B5N6TnuTU0SVRFxMAr2nfLj+4T6gY1NPeDdtj8cwy2Rk5v4GIUK9oSiTSMntEdrKeaYG4eyYPjZun7D7w==",
+      "path": "mysql.data/26.7.0",
+      "hashPath": "mysql.data.26.7.0.nupkg.sha512"
     },
-    "MySql.EntityFrameworkCore/9.0.9": {
+    "MySql.EntityFrameworkCore/10.0.9": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-SGOgwLwhMzETI5ziYYT4eDtHOHsvTdl+fZSEhubR2AZhj/e9uDVS3m3bKpylVx7XntY5I2Dq9eftNeMi0G2zcw==",
-      "path": "mysql.entityframeworkcore/9.0.9",
-      "hashPath": "mysql.entityframeworkcore.9.0.9.nupkg.sha512"
+      "sha512": "sha512-1WF31dFOi9UzkLsDl3A6QnvxIJGXzVikgVbuYbgESRDsoI5WYr5ygWQJC9kbDJxldrCT6nDgt87LNFTKRgrwpQ==",
+      "path": "mysql.entityframeworkcore/10.0.9",
+      "hashPath": "mysql.entityframeworkcore.10.0.9.nupkg.sha512"
     },
     "Scrutor/6.0.1": {
       "type": "package",
@@ -1533,12 +1533,12 @@
       "path": "swashbuckle.aspnetcore.swaggerui/9.0.6",
       "hashPath": "swashbuckle.aspnetcore.swaggerui.9.0.6.nupkg.sha512"
     },
-    "System.Configuration.ConfigurationManager/8.0.0": {
+    "System.Configuration.ConfigurationManager/10.0.8": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-JlYi9XVvIREURRUlGMr1F6vOFLk7YSY4p1vHo4kX3tQ0AGrjqlRWHDi66ImHhy6qwXBG3BJ6Y1QlYQ+Qz6Xgww==",
-      "path": "system.configuration.configurationmanager/8.0.0",
-      "hashPath": "system.configuration.configurationmanager.8.0.0.nupkg.sha512"
+      "sha512": "sha512-QG+HHwJjLyUiRuA9axr5pDqHAxboo7FXCTRakxMABE9CUAUij/tsd/MsgQPJUEppkf+YBLT+F/P/wKIVCAIcNg==",
+      "path": "system.configuration.configurationmanager/10.0.8",
+      "hashPath": "system.configuration.configurationmanager.10.0.8.nupkg.sha512"
     },
     "System.IdentityModel.Tokens.Jwt/8.14.0": {
       "type": "package",
@@ -1547,33 +1547,33 @@
       "path": "system.identitymodel.tokens.jwt/8.14.0",
       "hashPath": "system.identitymodel.tokens.jwt.8.14.0.nupkg.sha512"
     },
-    "System.Security.Cryptography.ProtectedData/8.0.0": {
+    "System.Security.Cryptography.ProtectedData/10.0.8": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-+TUFINV2q2ifyXauQXRwy4CiBhqvDEDZeVJU7qfxya4aRYOKzVBpN+4acx25VcPB9ywUN6C0n8drWl110PhZEg==",
-      "path": "system.security.cryptography.protecteddata/8.0.0",
-      "hashPath": "system.security.cryptography.protecteddata.8.0.0.nupkg.sha512"
+      "sha512": "sha512-/ldVgSfImIBp6fLWS7sLH0BnmtFj0ZwGlZo4Xx2q0K3ZhJNDbW45kj2f6zPoC+L+BTINuHdMzTsopuwmkbgcNA==",
+      "path": "system.security.cryptography.protecteddata/10.0.8",
+      "hashPath": "system.security.cryptography.protecteddata.10.0.8.nupkg.sha512"
     },
-    "System.Security.Permissions/8.0.0": {
+    "System.Security.Permissions/10.0.8": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-v/BBylw7XevuAsHXoX9dDUUfmBIcUf7Lkz8K3ZXIKz3YRKpw8YftpSir4n4e/jDTKFoaK37AsC3xnk+GNFI1Ow==",
-      "path": "system.security.permissions/8.0.0",
-      "hashPath": "system.security.permissions.8.0.0.nupkg.sha512"
+      "sha512": "sha512-nIA3VtrHAVbx6v3UbTBkB7yb3ShjVS+A0BpdfXaYLnJP0anIfE9Z9s+kXIDlv82FxEaOoL32866N8p7KsydwdA==",
+      "path": "system.security.permissions/10.0.8",
+      "hashPath": "system.security.permissions.10.0.8.nupkg.sha512"
     },
-    "System.Windows.Extensions/8.0.0": {
+    "System.Windows.Extensions/10.0.8": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-Obg3a90MkOw9mYKxrardLpY2u0axDMrSmy4JCdq2cYbelM2cUwmUir5Bomvd1yxmPL9h5LVHU1tuKBZpUjfASg==",
-      "path": "system.windows.extensions/8.0.0",
-      "hashPath": "system.windows.extensions.8.0.0.nupkg.sha512"
+      "sha512": "sha512-4hnHSbtc1FP91qiOsweSa/3My/tkKAU9WcUyCZNSUPhfNyFtIhTl9qEPaSK2g4XzTMaq4huRerF6tSV9q44Cnw==",
+      "path": "system.windows.extensions/10.0.8",
+      "hashPath": "system.windows.extensions.10.0.8.nupkg.sha512"
     },
-    "ZstdSharp.Port/0.8.6": {
+    "ZstdSharp.Port/0.8.8": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-iP4jVLQoQmUjMU88g1WObiNr6YKZGvh4aOXn3yOJsHqZsflwRsxZPcIBvNXgjXO3vQKSLctXGLTpcBPLnWPS8A==",
-      "path": "zstdsharp.port/0.8.6",
-      "hashPath": "zstdsharp.port.0.8.6.nupkg.sha512"
+      "sha512": "sha512-UIDFkA5DC3en3tOJ3Mof11yBx9kUQLsaeo/oFdvN6Bbkr9E9+VCqfIadHci8cu+I51K2Sl7XYWVl2R/mA75NBQ==",
+      "path": "zstdsharp.port/0.8.8",
+      "hashPath": "zstdsharp.port.0.8.8.nupkg.sha512"
     }
   }
 }
