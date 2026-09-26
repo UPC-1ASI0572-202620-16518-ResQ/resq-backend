@@ -1,4 +1,6 @@
-﻿using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
+using ResQ.API.IAM.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration;
@@ -42,5 +44,11 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
    protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        
+        // IAM Context
+        builder.ApplyIamConfiguration();
+        
+        // General Naming Convention for the database objects
+        builder.UseSnakeCaseNamingConvention();
     }
 }
