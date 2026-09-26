@@ -1,0 +1,294 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ResQ.API</name>
+    </assembly>
+    <members>
+        <member name="T:Program">
+            <summary>
+            Auto-generated public partial Program class for top-level statement apps.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Shared.Domain.Model.Events.IEvent">
+            <summary>
+            Represents a domain event in the system.
+            </summary>
+            <remarks>
+            This interface is used to mark classes as domain events that can be published and handled by the event bus.
+            It extends from <see cref="T:Cortex.Mediator.Notifications.INotification"/> to integrate with the mediator pattern for event handling.
+            </remarks>
+        </member>
+        <member name="T:ResQ.API.Shared.Domain.Repositories.IBaseRepository`1">
+            <summary>
+                Base repository interface for all repositories
+            </summary>
+            <remarks>
+                This interface is used to define the basic CRUD operations for all repositories
+            </remarks>
+            <typeparam name="TEntity">
+                The entity type for the repository
+            </typeparam>
+        </member>
+        <member name="M:ResQ.API.Shared.Domain.Repositories.IBaseRepository`1.AddAsync(`0)">
+            <summary>
+                Add an entity to the repository
+            </summary>
+            <param name="entity">
+                The entity to add
+            </param>
+            <returns></returns>
+        </member>
+        <member name="M:ResQ.API.Shared.Domain.Repositories.IBaseRepository`1.FindByIdAsync(System.Int32)">
+            <summary>
+                Find an entity by its id
+            </summary>
+            <param name="id">
+                The id of the entity to find
+            </param>
+            <returns>
+                The entity if found, otherwise null
+            </returns>
+        </member>
+        <member name="M:ResQ.API.Shared.Domain.Repositories.IBaseRepository`1.Remove(`0)">
+            <summary>
+                Remove an entity from the repository
+            </summary>
+            <param name="entity">
+                The entity to remove
+            </param>
+        </member>
+        <member name="M:ResQ.API.Shared.Domain.Repositories.IBaseRepository`1.ListAsync">
+            <summary>
+                List all entities in the repository
+            </summary>
+            <returns>
+                A list of all entities in the repository
+            </returns>
+        </member>
+        <member name="T:ResQ.API.Shared.Domain.Repositories.IUnitOfWork">
+            <summary>
+                Unit of work interface for all repositories
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Shared.Domain.Repositories.IUnitOfWork.CompleteAsync">
+            <summary>
+                Save changes to the repository
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.Extensions.StringExtensions">
+            <summary>
+                Provides extension methods for string manipulation related to ASP.NET configuration.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.Extensions.StringExtensions.KebabCaseRegex">
+            <remarks>
+            Pattern:<br/>
+            <code>(?&lt;!^)([A-Z][a-z]|(?&lt;=[a-z])[A-Z])</code><br/>
+            Options:<br/>
+            <code>RegexOptions.Compiled</code><br/>
+            Explanation:<br/>
+            <code>
+            ○ Zero-width negative lookbehind.<br/>
+                ○ Match if at the beginning of the string.<br/>
+            ○ 1st capture group.<br/>
+                ○ Match with 2 alternative expressions, atomically.<br/>
+                    ○ Match a sequence of expressions.<br/>
+                        ○ Match a character in the set [A-Z].<br/>
+                        ○ Match a character in the set [a-z].<br/>
+                    ○ Match a sequence of expressions.<br/>
+                        ○ Zero-width positive lookbehind.<br/>
+                            ○ Match a character in the set [a-z] right-to-left.<br/>
+                        ○ Match a character in the set [A-Z].<br/>
+            </code>
+            </remarks>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.Extensions.StringExtensions.ToKebabCase(System.String)">
+            <summary>
+                Converts a string to kebab-case casing, e.g. "MyString" becomes "my-string"
+            </summary>
+            <param name="text">The string to convert.</param>
+            <returns>The string in the kebab-case.</returns>
+        </member>
+        <member name="T:ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.KebabCaseRouteNamingConvention">
+            <summary>
+                This class is used to replace the default route naming convention with a kebab-case naming convention.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.KebabCaseRouteNamingConvention.Apply(Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerModel)">
+            <summary>
+                This method applies the kebab-case naming convention to the controller.
+            </summary>
+            <param name="controller">The <see cref="T:Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerModel" /></param>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.KebabCaseRouteNamingConvention.ReplaceControllerTemplate(Microsoft.AspNetCore.Mvc.ApplicationModels.SelectorModel,System.String)">
+            <summary>
+                This method replaces the default controller template with a kebab-case template.
+            </summary>
+            <param name="selector">The <see cref="T:Microsoft.AspNetCore.Mvc.ApplicationModels.SelectorModel" /></param>
+            <param name="name">string containing the name</param>
+            <returns></returns>
+        </member>
+        <member name="T:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.AppDbContext">
+            <summary>
+                Application database context for the ResQ Platform
+            </summary>
+            <param name="options">
+                The options for the database context
+            </param>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.AppDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions)">
+            <summary>
+                Application database context for the ResQ Platform
+            </summary>
+            <param name="options">
+                The options for the database context
+            </param>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.AppDbContext.OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)">
+            <summary>
+                On configuring the database context
+            </summary>
+            <remarks>
+                This method is used to configure the database context.
+                It also adds the created and updated date interceptor to the database context.
+            </remarks>
+            <param name="builder">
+                The option builder for the database context
+            </param>
+            
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.AppDbContext.OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder)">
+             <summary>
+                 On creating the database model
+             </summary>
+             <remarks>
+                 This method is used to create the database model for the application.
+             </remarks>
+             <param name="builder">
+                 The model builder for the database context
+             </param>
+            
+        </member>
+        <member name="T:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions.StringExtensions">
+            <summary>
+                String extensions for the database context
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions.StringExtensions.ToSnakeCase(System.String)">
+            <summary>
+                Convert the string to snake case
+            </summary>
+            <param name="text">
+                The text to convert to snake case
+            </param>
+            <returns>
+                The snake cased text
+            </returns>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions.StringExtensions.ToPlural(System.String)">
+            <summary>
+                Convert the string to plural
+            </summary>
+            <param name="text">
+                The text to convert to plural
+            </param>
+            <returns>
+                The pluralized text
+            </returns>
+        </member>
+        <member name="T:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.ModelBuilderExtensions">
+            <summary>
+                Model builder extensions for the database context
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.ModelBuilderExtensions.UseSnakeCaseNamingConvention(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <summary>
+                Applies snake_case naming convention to the model.
+            </summary>
+            <param name="builder">The model builder.</param>
+        </member>
+        <member name="T:ResQ.API.Shared.Infrastructure.Persistence.EFC.Repositories.BaseRepository`1">
+            <summary>
+                Base repository for all repositories
+            </summary>
+            <remarks>
+                This class is used to define the basic CRUD operations for all repositories.
+                This class implements the IBaseRepository interface.
+            </remarks>
+            <typeparam name="TEntity">
+                The entity type for the repository
+            </typeparam>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Repositories.BaseRepository`1.#ctor(ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.AppDbContext)">
+            <summary>
+                Default constructor for the base repository
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Shared.Infrastructure.Persistence.EFC.Repositories.UnitOfWork">
+            <summary>
+                Unit of work for the application.
+            </summary>
+            <remarks>
+                This class is used to save changes to the database context.
+                It implements the IUnitOfWork interface.
+            </remarks>
+            <param name="context">
+                The database context for the application
+            </param>
+        </member>
+        <member name="M:ResQ.API.Shared.Infrastructure.Persistence.EFC.Repositories.UnitOfWork.#ctor(ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.AppDbContext)">
+            <summary>
+                Unit of work for the application.
+            </summary>
+            <remarks>
+                This class is used to save changes to the database context.
+                It implements the IUnitOfWork interface.
+            </remarks>
+            <param name="context">
+                The database context for the application
+            </param>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.KebabCaseRegex_0">
+            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the KebabCaseRegex method.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.Instance">
+            <summary>Cached, thread-safe singleton instance.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.#ctor">
+            <summary>Initializes the instance.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.RunnerFactory">
+            <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.RunnerFactory.CreateInstance">
+            <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.RunnerFactory.Runner">
+            <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+            <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if a possible match was found; false if no more matches are possible.</returns>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.KebabCaseRegex_0.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Determine whether <paramref name="inputSpan"/> at base.runtextpos is a match for the regular expression.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if the regular expression matches at the current position; otherwise, false.</returns>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.Utilities">
+            <summary>Helper methods used by generated <see cref="T:System.Text.RegularExpressions.Regex"/>-derived implementations.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_defaultTimeout">
+            <summary>Default timeout value set in <see cref="T:System.AppContext"/>, or <see cref="F:System.Text.RegularExpressions.Regex.InfiniteMatchTimeout"/> if none was set.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_hasTimeout">
+            <summary>Whether <see cref="F:System.Text.RegularExpressions.Generated.Utilities.s_defaultTimeout"/> is non-infinite.</summary>
+        </member>
+    </members>
+</doc>
