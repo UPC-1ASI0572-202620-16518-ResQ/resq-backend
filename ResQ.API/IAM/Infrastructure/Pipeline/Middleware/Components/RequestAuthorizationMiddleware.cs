@@ -22,17 +22,27 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
     /// <param name="context">The current <see cref="HttpContext" />.</param>
     /// <param name="userQueryService">Service used to load users by id.</param>
     /// <param name="tokenService">Service used to validate JWT tokens.</param>
+    /// <param name="configuration"> Service used to configure the initial parameters.</param>
     /// <returns>A task that represents the completion of request processing.</returns>
     /// <exception cref="Exception">Thrown when the token is missing or invalid.</exception>
-    public async Task InvokeAsync(
-        HttpContext context,
-        IUserQueryService userQueryService,
-        ITokenService tokenService)
+    public async Task InvokeAsync(HttpContext context, IUserQueryService userQueryService, ITokenService tokenService, IConfiguration configuration)
     {
         Console.WriteLine("Entering InvokeAsync");
-        var allowAnonymous = context.Request.HttpContext.GetEndpoint()!.Metadata
-            .Any(m => m.GetType() == typeof(AllowAnonymousAttribute));
+
+        // Swagger and OpenAPI documentation do not require authentication
+        if (context.Request.Path.StartsWithSegments("/swagger") ||
+            context.Request.Path.StartsWithSegments("/openapi"))
+        {
+            await next(context);
+            return;
+        }
+
+        var endpoint = context.GetEndpoint();
+
+        var allowAnonymous = endpoint?.Metadata.Any(m => m.GetType() == typeof(AllowAnonymousAttribute)) ?? false;
+
         Console.WriteLine($"Allow Anonymous is {allowAnonymous}");
+
         if (allowAnonymous)
         {
             Console.WriteLine("Skipping authorization");
@@ -41,7 +51,11 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
         }
 
         Console.WriteLine("Entering authorization");
-        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+        var token = context.Request.Headers["Authorization"]
+            .FirstOrDefault()?
+            .Split(" ")
+            .Last();
 
         if (token == null) throw new Exception("Null or invalid token");
 
@@ -52,9 +66,23 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
         var getUserByIdQuery = new GetUserByIdQuery(userId.Value);
 
         var user = await userQueryService.Handle(getUserByIdQuery);
-        Console.WriteLine("Successful authorization. Updating Context...");
+
+        if (user == null) throw new Exception("User not found");
+
         context.Items["User"] = user;
-        Console.WriteLine("Continuing with Middleware Pipeline");
+
+        // Temporary single-organization context for development
+        var organizationIdValue = configuration["DevelopmentSettings:OrganizationId"];
+
+        if (!Guid.TryParse(organizationIdValue, out var organizationId))
+        {
+            throw new Exception("Development organization id is not configured correctly.");
+        }
+
+        context.Items["OrganizationId"] = organizationId;
+
+        Console.WriteLine("Successful authorization. Updating Context...");
+
         await next(context);
     }
 }
