@@ -4,6 +4,358 @@
         <name>ResQ.API</name>
     </assembly>
     <members>
+        <member name="T:ResQ.API.Building_Management.Domain.Model.Aggregates.Building">
+            <summary>
+            Aggregate Root representing a building owned by an organization.
+            All zone mutations are performed through this aggregate.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.#ctor">
+            <summary>
+            Required by EF Core.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.Register(System.Guid,ResQ.API.Building_Management.Domain.Model.ValueObjects.BuildingCode,System.String,System.String,ResQ.API.Building_Management.Domain.Model.ValueObjects.BuildingAddress)">
+            <summary>
+            Registers a new active building with no zones.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.UpdateDetails(System.String,System.String,ResQ.API.Building_Management.Domain.Model.ValueObjects.BuildingAddress)">
+            <summary>
+            Updates the descriptive information and address.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.ChangeAdministrativeStatus(ResQ.API.Building_Management.Domain.Model.ValueObjects.LocationAdministrativeStatus)">
+            <summary>
+            Activates or deactivates the building administratively.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.AddZone(System.String,System.String,System.String,System.String)">
+            <summary>
+            Adds an active zone to this building. The building must be active.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.UpdateZone(System.Guid,System.String,System.String,System.String)">
+            <summary>
+            Updates the descriptive data of a zone belonging to this building.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.ChangeZoneAdministrativeStatus(System.Guid,ResQ.API.Building_Management.Domain.Model.ValueObjects.LocationAdministrativeStatus)">
+            <summary>
+            Changes the administrative status of a zone. Activation requires an active building.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Aggregates.Building.IsAvailableForAssignment(System.Nullable{System.Guid})">
+            <summary>
+            Checks whether the building (and optionally a zone) is available for device assignment.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Domain.Model.Entities.Zone">
+            <summary>
+            Physical area within a building (e.g. kitchen, warehouse, technical room).
+            Belongs to a single Building aggregate.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Entities.Zone.#ctor">
+            <summary>
+            Required by EF Core.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Domain.Model.Queries.PagedResult`1">
+            <summary>
+            Represents a paginated query result.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Domain.Model.Queries.PagedResult`1.#ctor(System.Collections.Generic.IReadOnlyCollection{`0},System.Int32,System.Int32,System.Int64,System.Int32)">
+            <summary>
+            Represents a paginated query result.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Domain.Model.ValueObjects.BuildingAddress">
+            <summary>
+            Physical address of a building.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Domain.Model.ValueObjects.BuildingCode">
+            <summary>
+            Unique code for a building within an organization.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Domain.Model.ValueObjects.LocationAdministrativeStatus">
+            <summary>
+            Administrative status for buildings and zones.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Domain.Model.ValueObjects.ZoneCode">
+            <summary>
+            Unique code for a zone within a building.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Domain.Repositories.IBuildingRepository">
+            <summary>
+            Repository contract for Building aggregates.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Infrastructure.Persistence.EFC.Configuration.Extensions.ModelBuilderExtensions">
+            <summary>
+            Extension methods for configuring the Building Management persistence model.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Interfaces.ACL.BuildingsContextFacade">
+            <summary>
+            Implementation of the Anti-Corruption Layer facade for Building Management.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.ACL.BuildingsContextFacade.#ctor(ResQ.API.Building_Management.Domain.Services.IBuildingQueryService)">
+            <summary>
+            Implementation of the Anti-Corruption Layer facade for Building Management.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Interfaces.ACL.IBuildingsContextFacade">
+            <summary>
+            Anti-Corruption Layer (ACL) interface exposed to other bounded contexts (e.g. Device Management).
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.ACL.IBuildingsContextFacade.ValidateAssignmentAsync(System.Guid,System.Guid,System.Nullable{System.Guid})">
+            <summary>
+            Validates whether a building and optional zone exist and are active for assignment.
+            </summary>
+            <param name="organizationId">Organization identifier.</param>
+            <param name="buildingId">Building identifier.</param>
+            <param name="zoneId">Optional zone identifier.</param>
+            <returns>True if valid and active, false otherwise.</returns>
+        </member>
+        <member name="T:ResQ.API.Building_Management.Interfaces.REST.BuildingsController">
+            <summary>
+            Controlador REST para la gestión de edificaciones y zonas (Building Management Bounded Context).
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.#ctor(ResQ.API.Building_Management.Domain.Services.IBuildingCommandService,ResQ.API.Building_Management.Domain.Services.IBuildingQueryService)">
+            <summary>
+            Controlador REST para la gestión de edificaciones y zonas (Building Management Bounded Context).
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.RegisterBuilding(ResQ.API.Building_Management.Interfaces.REST.Resources.RegisterBuildingResource)">
+            <summary>
+            Registra una nueva edificación activa dentro de la organización autenticada.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.GetBuildings(System.Nullable{ResQ.API.Building_Management.Domain.Model.ValueObjects.LocationAdministrativeStatus},System.Int32,System.Int32)">
+            <summary>
+            Lista edificaciones de la organización con paginación y filtro opcional por estado administrativo.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.GetBuildingById(System.Guid)">
+            <summary>
+            Obtiene los detalles de una edificación por su ID, incluyendo sus zonas visibles.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.UpdateBuildingDetails(System.Guid,ResQ.API.Building_Management.Interfaces.REST.Resources.UpdateBuildingDetailsResource)">
+            <summary>
+            Actualiza los detalles descriptivos y dirección física de una edificación.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.ChangeBuildingAdministrativeStatus(System.Guid,ResQ.API.Building_Management.Interfaces.REST.Resources.ChangeBuildingAdministrativeStatusResource)">
+            <summary>
+            Cambia el estado administrativo (Active / Inactive) de una edificación.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.AddZoneToBuilding(System.Guid,ResQ.API.Building_Management.Interfaces.REST.Resources.AddZoneToBuildingResource)">
+            <summary>
+            Agrega una nueva zona activa a una edificación activa.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.GetZonesByBuildingId(System.Guid,System.Nullable{ResQ.API.Building_Management.Domain.Model.ValueObjects.LocationAdministrativeStatus},System.Int32,System.Int32)">
+            <summary>
+            Lista las zonas pertenecientes a una edificación con filtro opcional por estado.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.GetZoneById(System.Guid,System.Guid)">
+            <summary>
+            Obtiene los detalles de una zona específica dentro de una edificación.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.UpdateZone(System.Guid,System.Guid,ResQ.API.Building_Management.Interfaces.REST.Resources.UpdateZoneResource)">
+            <summary>
+            Actualiza los datos descriptivos y piso de una zona.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Building_Management.Interfaces.REST.BuildingsController.ChangeZoneAdministrativeStatus(System.Guid,System.Guid,ResQ.API.Building_Management.Interfaces.REST.Resources.ChangeZoneAdministrativeStatusResource)">
+            <summary>
+            Cambia el estado administrativo (Active / Inactive) de una zona específica.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Device_Management.Domain.Model.Aggregates.Device">
+            <summary>
+            Aggregate Root that represents an IoT Device registered in ResQ.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Id">
+            <summary>
+            Unique identifier of the device.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.OrganizationId">
+            <summary>
+            Organization that owns the device.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.DeviceCode">
+            <summary>
+            Unique device code inside the organization.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Name">
+            <summary>
+            Display name of the device.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Description">
+            <summary>
+            Optional administrative description.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Specifications">
+            <summary>
+            Manufacturer, model and serial number information.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Assignment">
+            <summary>
+            Current building and optional zone assignment.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.ExternalReference">
+            <summary>
+            Optional reference to the device in an external system.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.AdministrativeStatus">
+            <summary>
+            Administrative status of the device.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Capabilities">
+            <summary>
+            Measurement and actuation capabilities of the device.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.CreatedAt">
+            <summary>
+            Date and time when the device was registered.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.UpdatedAt">
+            <summary>
+            Date and time of the last modification.
+            </summary>
+        </member>
+        <member name="P:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Version">
+            <summary>
+            Version used for optimistic concurrency control.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.#ctor">
+            <summary>
+            Required by Entity Framework Core.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Register(System.Guid,ResQ.API.Device_Management.Domain.Model.ValueObjects.DeviceCode,System.String,System.String,ResQ.API.Device_Management.Domain.Model.ValueObjects.DeviceSpecifications,ResQ.API.Device_Management.Domain.Model.ValueObjects.DeviceAssignment,ResQ.API.Device_Management.Domain.Model.ValueObjects.ExternalDeviceReference,System.Collections.Generic.IEnumerable{ResQ.API.Device_Management.Domain.Model.ValueObjects.CapabilityDefinition})">
+            <summary>
+            Registers a new inactive device.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.UpdateDetails(System.String,System.String,ResQ.API.Device_Management.Domain.Model.ValueObjects.DeviceSpecifications)">
+            <summary>
+            Updates the descriptive information of the device.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.ReplaceCapabilities(System.Collections.Generic.IEnumerable{ResQ.API.Device_Management.Domain.Model.ValueObjects.CapabilityDefinition})">
+            <summary>
+            Replaces the capabilities of an inactive device.
+            Existing capabilities preserve their identifiers when the code remains the same.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.AssignTo(ResQ.API.Device_Management.Domain.Model.ValueObjects.DeviceAssignment)">
+            <summary>
+            Changes the building or zone assignment of an inactive device.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.ChangeAdministrativeStatus(ResQ.API.Device_Management.Domain.Model.ValueObjects.EDeviceAdministrativeStatus)">
+            <summary>
+            Changes the administrative status of the device.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.EnsureInactive">
+            <summary>
+            Ensures the device is inactive before modifying
+            its capabilities or assignment.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.EnsureNotRetired">
+            <summary>
+            Prevents modifications to a retired device.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.ValidateDetails(System.String,System.String)">
+            <summary>
+            Validates the descriptive information of a device.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.ValidateCapabilities(System.Collections.Generic.IReadOnlyCollection{ResQ.API.Device_Management.Domain.Model.ValueObjects.CapabilityDefinition})">
+            <summary>
+            Validates that the device contains at least one capability
+            and that capability codes are not duplicated.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.CapabilitiesAreEquivalent(System.Collections.Generic.IReadOnlyCollection{ResQ.API.Device_Management.Domain.Model.ValueObjects.CapabilityDefinition})">
+            <summary>
+            Determines whether the new capability collection
+            is equivalent to the current one.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.Normalize(System.String)">
+            <summary>
+            Normalizes optional text values.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Aggregates.Device.RegisterChange">
+            <summary>
+            Updates the modification date and aggregate version.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Device_Management.Domain.Model.Entities.DeviceCapability">
+            <summary>
+            Represents a measurement or actuation capability
+            that belongs to a Device.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Device_Management.Domain.Model.Queries.PagedResult`1">
+            <summary>
+            Represents a paginated query result.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Domain.Model.Queries.PagedResult`1.#ctor(System.Collections.Generic.IReadOnlyCollection{`0},System.Int32,System.Int32,System.Int64,System.Int32)">
+            <summary>
+            Represents a paginated query result.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Device_Management.Domain.Repositories.IDeviceRepository">
+            <summary>
+            Repository contract for Device aggregates.
+            </summary>
+        </member>
+        <member name="T:ResQ.API.Device_Management.Infrastructure.Persistence.EFC.Configuration.Extensions.ModelBuilderExtensions">
+            <summary>
+            Extension methods for configuring the Device Management persistence model.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Device_Management.Infrastructure.Persistence.EFC.Configuration.Extensions.ModelBuilderExtensions.ApplyDeviceManagementConfiguration(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <summary>
+            Applies the Device Management entity configurations.
+            </summary>
+            <param name="builder">The model builder.</param>
+        </member>
         <member name="T:ResQ.API.IAM.Application.ACL.Services.IamContextFacade">
             <summary>
                 Facade for the IAM context, providing access to user-related operations.
@@ -520,13 +872,14 @@
                 are skipped.
             </remarks>
         </member>
-        <member name="M:ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Components.RequestAuthorizationMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext,ResQ.API.IAM.Domain.Services.IUserQueryService,ResQ.API.IAM.Application.Internal.OutboundServices.ITokenService)">
+        <member name="M:ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Components.RequestAuthorizationMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext,ResQ.API.IAM.Domain.Services.IUserQueryService,ResQ.API.IAM.Application.Internal.OutboundServices.ITokenService,Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
                 Invoked by the ASP.NET Core pipeline to authorize the request.
             </summary>
             <param name="context">The current <see cref="T:Microsoft.AspNetCore.Http.HttpContext" />.</param>
             <param name="userQueryService">Service used to load users by id.</param>
             <param name="tokenService">Service used to validate JWT tokens.</param>
+            <param name="configuration"> Service used to configure the initial parameters.</param>
             <returns>A task that represents the completion of request processing.</returns>
             <exception cref="T:System.Exception">Thrown when the token is missing or invalid.</exception>
         </member>
@@ -892,6 +1245,12 @@
         <member name="M:ResQ.API.Profiles.Domain.Model.ValueObjects.UserPreferences.IsSmsEnabled">
             <summary>
                 Checks if SMS alerts are enabled.
+            </summary>
+        </member>
+        <member name="M:ResQ.API.Shared.Application.Internal.PartialUpdateHelper.ShouldIgnore(System.String)">
+            <summary>
+            Determines whether an input value should be ignored during updates
+            (e.g. if it is null, whitespace, or Swagger's default placeholder "string").
             </summary>
         </member>
         <member name="T:ResQ.API.Shared.Domain.Model.Events.IEvent">

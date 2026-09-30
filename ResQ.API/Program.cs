@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ResQ.API.Building_Management.Application.Internal.OutboundServices;
 using ResQ.API.Device_Management.Application.Internal.OutboundServices;
 using ResQ.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using ResQ.API.Profiles.Application.Internal.OutboundServices;
@@ -46,6 +47,9 @@ builder.Services.AddUserContextServices();
 
 // Device Management Bounded Context Services
 builder.Services.AddDeviceManagementContextServices();
+
+// Building Management Bounded Context Services
+builder.Services.AddBuildingManagementContextServices();
 
 // Mediator Configuration
 builder.AddCortexConfigurationServices();

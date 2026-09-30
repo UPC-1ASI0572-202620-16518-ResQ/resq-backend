@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ResQ.API.Device_Management.Domain.Model.Aggregates;
 using ResQ.API.Device_Management.Domain.Model.Entities;
 using ResQ.API.Device_Management.Domain.Model.ValueObjects;
@@ -68,6 +68,7 @@ public static class ModelBuilderExtensions
         builder.Entity<DeviceCapability>().ToTable("DeviceCapabilities");
         builder.Entity<DeviceCapability>().HasKey(c => c.Id);
         builder.Entity<DeviceCapability>().Property(c => c.Id).ValueGeneratedNever();
+        builder.Entity<DeviceCapability>().Property<Guid>("DeviceId").HasColumnName("device_id");
         builder.Entity<DeviceCapability>().Property(c => c.Code).HasMaxLength(80).IsRequired();
         builder.Entity<DeviceCapability>().Property(c => c.Kind).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Entity<DeviceCapability>().Property(c => c.Unit).HasMaxLength(30);

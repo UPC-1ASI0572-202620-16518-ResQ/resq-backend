@@ -57,8 +57,8 @@ public class UserProfile
     /// <param name="phoneNumber">The new phone number.</param>
     public void UpdateContactInfo(string? email, string? phoneNumber)
     {
-        var newEmail = string.IsNullOrWhiteSpace(email) || email == "string" ? ContactInfo.Email : email;
-        var newPhone = string.IsNullOrWhiteSpace(phoneNumber) || phoneNumber == "string" ? ContactInfo.PhoneNumber : phoneNumber;
+        var newEmail = ResQ.API.Shared.Application.Internal.PartialUpdateHelper.ShouldIgnore(email) ? ContactInfo.Email : email!.Trim();
+        var newPhone = ResQ.API.Shared.Application.Internal.PartialUpdateHelper.ShouldIgnore(phoneNumber) ? ContactInfo.PhoneNumber : phoneNumber!.Trim();
         ContactInfo = new ContactInformation(newEmail, newPhone);
     }
 }
