@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ResQ.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cad5c1237a2141a02f749ec6586eb3d49fdabff0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+58eaf9946d0c01753f325391a67f871ba47ae4db")]
 [assembly: System.Reflection.AssemblyProductAttribute("ResQ.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ResQ.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
