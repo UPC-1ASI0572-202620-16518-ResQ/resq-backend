@@ -3,6 +3,9 @@ using ResQ.API.Profiles.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
+using ResQ.API.Building_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using ResQ.API.Device_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using ResQ.API.Incident_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
 
 namespace ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration;
 
@@ -51,6 +54,14 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         
         // User Context
         builder.ApplyUserConfiguration();
+        
+        // Devices Management Context
+        builder.ApplyDeviceManagementConfiguration();
+        
+        // Building Management Context
+        builder.ApplyBuildingManagementConfiguration();
+        // Incidents Management Context
+        builder.ApplyIncidentConfiguration();
         
         // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();

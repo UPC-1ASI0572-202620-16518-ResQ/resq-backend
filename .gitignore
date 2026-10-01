@@ -1,0 +1,22 @@
+﻿# .NET build output
+**/bin/
+**/obj/
+
+# Rider / IntelliJ
+.idea/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET user-specific files
+*.csproj.user
+
+# Test results
+TestResults/
+
+# NuGet packages
+*.nupkg
