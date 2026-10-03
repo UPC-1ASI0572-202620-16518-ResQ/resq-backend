@@ -1,0 +1,11 @@
+using ResQ.API.Alert_Management.Domain.Model.Aggregates;
+using ResQ.API.Alert_Management.Domain.Model.Queries;
+
+namespace ResQ.API.Alert_Management.Domain.Services;
+
+public interface IResponsePolicyQueryService
+{
+    Task<ResponsePolicy?> Handle(GetResponsePolicyByIdQuery query);
+
+    Task<IEnumerable<ResponsePolicy>> Handle(GetResponsePoliciesQuery query);
+}

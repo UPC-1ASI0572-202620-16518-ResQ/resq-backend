@@ -3,6 +3,7 @@ using ResQ.API.Profiles.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
+using ResQ.API.Alert_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Building_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Device_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Incident_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
@@ -67,7 +68,10 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         
         // Subscriptions Context
         builder.ApplySubscriptionConfiguration();
-        
+
+        // Alert Management Context
+        builder.ApplyAlertManagementConfiguration();
+
         // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();
     }
