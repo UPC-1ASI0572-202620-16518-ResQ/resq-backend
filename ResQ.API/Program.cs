@@ -11,6 +11,7 @@ using ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Mediator.Cortex.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using ResQ.API.Subscriptions.Application.Internal.OutboundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,8 +52,12 @@ builder.Services.AddDeviceManagementContextServices();
 
 // Building Management Bounded Context Services
 builder.Services.AddBuildingManagementContextServices();
+
 // Incident Management Bounded Context Services
 builder.Services.AddIncidentManagementContextServices();
+
+// Subscriptions Bounded Context Services
+builder.Services.AddSubscriptionContextServices();
 
 // Mediator Configuration
 builder.AddCortexConfigurationServices();
