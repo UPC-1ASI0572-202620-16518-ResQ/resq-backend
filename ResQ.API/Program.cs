@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ResQ.API.Alert_Management.Application.Internal.OutboundServices;
 using ResQ.API.Building_Management.Application.Internal.OutboundServices;
 using ResQ.API.Device_Management.Application.Internal.OutboundServices;
 using ResQ.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
@@ -58,6 +59,9 @@ builder.Services.AddIncidentManagementContextServices();
 
 // Subscriptions Bounded Context Services
 builder.Services.AddSubscriptionContextServices();
+
+// Alert Management Bounded Context Services
+builder.Services.AddAlertManagementContextServices();
 
 // Mediator Configuration
 builder.AddCortexConfigurationServices();
