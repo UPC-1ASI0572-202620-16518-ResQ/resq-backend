@@ -77,6 +77,90 @@ CREATE TABLE IF NOT EXISTS `device_capabilities` (
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_device_capabilities_devices_device_id` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "alerts", @"
+CREATE TABLE IF NOT EXISTS `alerts` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `risk_detection_id` varchar(64) NOT NULL,
+    `risk_type_code` varchar(50) NOT NULL,
+    `severity_code` varchar(20) NOT NULL,
+    `building_id` char(36) NULL,
+    `zone_id` char(36) NULL,
+    `detected_at` datetime NOT NULL,
+    `generated_at` datetime NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "notification_deliveries", @"
+CREATE TABLE IF NOT EXISTS `notification_deliveries` (
+    `id` char(36) NOT NULL,
+    `alert_id` char(36) NOT NULL,
+    `recipient_user_id` varchar(64) NOT NULL,
+    `channel` varchar(30) NOT NULL,
+    `destination` varchar(200) NOT NULL,
+    `status` varchar(20) NOT NULL,
+    `requested_at` datetime NOT NULL,
+    `completed_at` datetime NULL,
+    `failure_reason` varchar(500) NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_notification_deliveries_alert_id` (`alert_id`),
+    CONSTRAINT `fk_notification_deliveries_alerts_alert_id` FOREIGN KEY (`alert_id`) REFERENCES `alerts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "response_policies", @"
+CREATE TABLE IF NOT EXISTS `response_policies` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `risk_type_code` varchar(50) NOT NULL,
+    `status` varchar(16) NOT NULL,
+    `created_at` datetime NOT NULL,
+    `updated_at` datetime NOT NULL,
+    `version` bigint NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_response_policies_organization_id_risk_type_code` (`organization_id`, `risk_type_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "response_actions", @"
+CREATE TABLE IF NOT EXISTS `response_actions` (
+    `id` char(36) NOT NULL,
+    `policy_id` char(36) NOT NULL,
+    `action_code` varchar(80) NOT NULL,
+    `target_device_id` char(36) NOT NULL,
+    `target_capability_code` varchar(80) NOT NULL,
+    `authorization_mode` varchar(20) NOT NULL,
+    `critical` tinyint(1) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_response_actions_policy_id` (`policy_id`),
+    CONSTRAINT `fk_response_actions_response_policies_policy_id` FOREIGN KEY (`policy_id`) REFERENCES `response_policies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "response_executions", @"
+CREATE TABLE IF NOT EXISTS `response_executions` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `alert_id` char(36) NOT NULL,
+    `risk_detection_id` varchar(64) NOT NULL,
+    `policy_id` char(36) NOT NULL,
+    `action_id` char(36) NOT NULL,
+    `action_code` varchar(80) NOT NULL,
+    `target_device_id` char(36) NOT NULL,
+    `target_capability_code` varchar(80) NOT NULL,
+    `authorization_mode` varchar(20) NOT NULL,
+    `critical` tinyint(1) NOT NULL,
+    `status` varchar(30) NOT NULL,
+    `requested_at` datetime NOT NULL,
+    `authorization_id` char(36) NULL,
+    `authorization_decision` varchar(16) NULL,
+    `decided_by_user_id` varchar(64) NULL,
+    `decided_at` datetime NULL,
+    `result_successful` tinyint(1) NULL,
+    `result_code` varchar(80) NULL,
+    `result_message` varchar(500) NULL,
+    `result_completed_at` datetime NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_response_executions_organization_id_risk_detection_id` (`organization_id`, `risk_detection_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     private static void EnsureTableExists(AppDbContext context, string tableName, string createTableSql)

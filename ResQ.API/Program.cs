@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ResQ.API.Alert_Management.Application.Internal.OutboundServices;
 using ResQ.API.Building_Management.Application.Internal.OutboundServices;
 using ResQ.API.Device_Management.Application.Internal.OutboundServices;
 using ResQ.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
@@ -11,6 +12,7 @@ using ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Mediator.Cortex.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using ResQ.API.Subscriptions.Application.Internal.OutboundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,8 +53,15 @@ builder.Services.AddDeviceManagementContextServices();
 
 // Building Management Bounded Context Services
 builder.Services.AddBuildingManagementContextServices();
+
 // Incident Management Bounded Context Services
 builder.Services.AddIncidentManagementContextServices();
+
+// Subscriptions Bounded Context Services
+builder.Services.AddSubscriptionContextServices();
+
+// Alert Management Bounded Context Services
+builder.Services.AddAlertManagementContextServices();
 
 // Mediator Configuration
 builder.AddCortexConfigurationServices();
