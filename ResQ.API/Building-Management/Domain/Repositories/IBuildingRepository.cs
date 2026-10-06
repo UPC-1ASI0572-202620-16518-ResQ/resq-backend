@@ -27,4 +27,6 @@ public interface IBuildingRepository : IBaseRepository<Building>
         int page, int size);
 
     Task<Zone?> FindZoneByIdAsync(Guid organizationId, Guid buildingId, Guid zoneId);
+
+    Task<Building?> FindByZoneIdAndOrganizationIdAsync(Guid zoneId, Guid organizationId);
 }

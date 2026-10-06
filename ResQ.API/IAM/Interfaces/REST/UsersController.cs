@@ -88,7 +88,7 @@ public class UsersController(IUserQueryService userQueryService) : ControllerBas
     [SwaggerResponse(StatusCodes.Status200OK, "Los usuarios con el rol especificado fueron encontrados.", typeof(IEnumerable<UserResource>))]
     public async Task<IActionResult> GetUsersByRole(string role)
     {
-        if (!Enum.TryParse<Roles>(role, true, out var userRole))
+        if (!Enum.TryParse<Roles>(role, true, out var userRole) || !Enum.IsDefined(userRole) || int.TryParse(role, out _))
         {
             return BadRequest($"Invalid role: {role}");
         }

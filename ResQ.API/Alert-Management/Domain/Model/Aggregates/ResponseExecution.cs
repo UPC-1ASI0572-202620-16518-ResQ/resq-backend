@@ -1,11 +1,10 @@
-using ResQ.API.Alert_Management.Domain.Model.Entities;
 using ResQ.API.Alert_Management.Domain.Model.ValueObjects;
 
 namespace ResQ.API.Alert_Management.Domain.Model.Aggregates;
 
 /// <summary>
-/// Aggregate Root that tracks one response action requested for an alert,
-/// including its human authorization (when required) and the actuator result.
+/// Aggregate Root that tracks one response action requested for an alert
+/// (e.g. closing a gas valve) and its human authorization when required.
 /// </summary>
 public class ResponseExecution
 {
@@ -24,12 +23,7 @@ public class ResponseExecution
     public string RiskDetectionId { get; private set; } = string.Empty;
 
     /// <summary>
-    /// Policy whose action is being executed.
-    /// </summary>
-    public Guid PolicyId { get; private set; }
-
-    /// <summary>
-    /// Copy of the policy action at request time.
+    /// Action requested on the target device.
     /// </summary>
     public ResponseActionSnapshot Action { get; private set; } = null!;
 
@@ -39,8 +33,6 @@ public class ResponseExecution
 
     public ResponseAuthorization? Authorization { get; private set; }
 
-    public ExecutionResult? Result { get; private set; }
-
     /// <summary>
     /// Required by Entity Framework Core.
     /// </summary>
@@ -49,19 +41,16 @@ public class ResponseExecution
     }
 
     /// <summary>
-    /// Requests the execution of a policy action. Automatic actions are sent to the actuator right away;
+    /// Requests the execution of a response action. Automatic actions are sent to the actuator right away;
     /// actions that require a human decision wait in PENDING_AUTHORIZATION.
     /// </summary>
-    public static ResponseExecution Request(Guid organizationId, Guid alertId, string riskDetectionId, Guid policyId, ResponseAction action)
+    public static ResponseExecution Request(Guid organizationId, Guid alertId, string riskDetectionId, ResponseActionSnapshot action)
     {
         if (organizationId == Guid.Empty)
             throw new ArgumentException("Organization id is required.");
 
         if (alertId == Guid.Empty)
             throw new ArgumentException("Alert id is required.");
-
-        if (policyId == Guid.Empty)
-            throw new ArgumentException("Policy id is required.");
 
         if (string.IsNullOrWhiteSpace(riskDetectionId))
             throw new ArgumentException("Risk detection id is required.");
@@ -74,8 +63,7 @@ public class ResponseExecution
             OrganizationId = organizationId,
             AlertId = alertId,
             RiskDetectionId = riskDetectionId.Trim(),
-            PolicyId = policyId,
-            Action = action.ToSnapshot(),
+            Action = action,
             Status = action.AuthorizationMode == EAuthorizationMode.HumanRequired
                 ? EResponseExecutionStatus.PendingAuthorization
                 : EResponseExecutionStatus.ExecutionRequested,
@@ -91,31 +79,13 @@ public class ResponseExecution
         if (Action.AuthorizationMode != EAuthorizationMode.HumanRequired)
             throw new InvalidOperationException("This response execution does not require human authorization.");
 
-        if (Authorization is not null)
+        if (Authorization is not null || Status != EResponseExecutionStatus.PendingAuthorization)
             throw new InvalidOperationException("An authorization decision has already been registered.");
-
-        if (Status != EResponseExecutionStatus.PendingAuthorization)
-            throw new InvalidOperationException("A decision can only be registered while the response execution is pending authorization.");
 
         Authorization = new ResponseAuthorization(decision, decidedByUserId);
 
         Status = decision == EAuthorizationDecision.Approved
             ? EResponseExecutionStatus.Authorized
             : EResponseExecutionStatus.Rejected;
-    }
-
-    /// <summary>
-    /// Records the outcome reported by the actuator.
-    /// </summary>
-    public void RecordResult(bool successful, string resultCode, string? message)
-    {
-        if (Status != EResponseExecutionStatus.ExecutionRequested && Status != EResponseExecutionStatus.Authorized)
-            throw new InvalidOperationException("A result can only be recorded for an authorized or requested execution.");
-
-        Result = new ExecutionResult(successful, resultCode, message);
-
-        Status = successful
-            ? EResponseExecutionStatus.Succeeded
-            : EResponseExecutionStatus.Failed;
     }
 }

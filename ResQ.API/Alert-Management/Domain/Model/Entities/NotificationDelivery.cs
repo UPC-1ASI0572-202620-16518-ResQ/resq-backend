@@ -59,32 +59,4 @@ public class NotificationDelivery
         Status = ENotificationDeliveryStatus.Pending;
         RequestedAt = requestedAt;
     }
-
-    /// <summary>
-    /// Records the outcome reported by the notification provider.
-    /// </summary>
-    internal void RecordOutcome(ENotificationDeliveryStatus status, string? failureReason)
-    {
-        if (Status != ENotificationDeliveryStatus.Pending)
-            throw new InvalidOperationException("The delivery outcome has already been recorded.");
-
-        switch (status)
-        {
-            case ENotificationDeliveryStatus.Delivered:
-                FailureReason = null;
-                break;
-            case ENotificationDeliveryStatus.Failed:
-                if (string.IsNullOrWhiteSpace(failureReason))
-                    throw new ArgumentException("A failure reason is required when the delivery fails.");
-                if (failureReason.Trim().Length > 500)
-                    throw new ArgumentException("Failure reason cannot exceed 500 characters.");
-                FailureReason = failureReason.Trim();
-                break;
-            default:
-                throw new ArgumentException("The delivery outcome must be DELIVERED or FAILED.");
-        }
-
-        Status = status;
-        CompletedAt = DateTimeOffset.UtcNow;
-    }
 }

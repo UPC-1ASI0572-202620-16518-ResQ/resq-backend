@@ -6,9 +6,7 @@ namespace ResQ.API.Alert_Management.Domain.Services;
 public interface IAlertCommandService
 {
     /// <summary>
-    /// Generates an alert and requests the response executions of the active policy for its risk type.
+    /// Generates an alert, its notification deliveries and the requested response executions.
     /// </summary>
     Task<Alert?> Handle(GenerateAlertCommand command);
-
-    Task<Alert?> Handle(RecordNotificationDeliveryOutcomeCommand command);
 }

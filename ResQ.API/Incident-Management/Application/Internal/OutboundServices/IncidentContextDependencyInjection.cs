@@ -19,6 +19,10 @@ public static class IncidentContextDependencyInjection
         // Query Services
         services.AddScoped<IIncidentQueryService, IncidentQueryService>();
 
+        // ACL
+        services.AddScoped<ResQ.API.Incident_Management.Interfaces.ACL.IIncidentContextFacade,
+            ResQ.API.Incident_Management.Interfaces.ACL.IncidentContextFacade>();
+
         return services;
     }
 }

@@ -74,7 +74,14 @@ public class Incident
     {
         if (Status == newStatus)
             return;
-        
+
+        // InProgress requires an attendant and Resolved requires notes, so they have their own operations
+        if (newStatus == EIncidentStatus.InProgress)
+            throw new InvalidOperationException("An incident moves to InProgress only when an attendant is assigned (use the assign operation).");
+
+        if (newStatus == EIncidentStatus.Resolved)
+            throw new InvalidOperationException("An incident is resolved only with resolution notes (use the resolve operation).");
+
         if (!IsValidStatusTransition(Status, newStatus))
         {
             throw new InvalidOperationException($"Invalid incident status transition: {Status} -> {newStatus}");

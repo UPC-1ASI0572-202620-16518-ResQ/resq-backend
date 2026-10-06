@@ -37,17 +37,25 @@ public class AuthenticationController(
                       "en los demás endpoints protegidos en el header <code>Authorization: Bearer {token}</code>.<br><br>" +
                       "**Respuestas:**<br>" +
                       "- <b>200 OK</b>: Autenticación exitosa.<br>" +
-                      "- <b>400/500</b>: Credenciales inválidas o error interno.",
+                      "- <b>401 Unauthorized</b>: Usuario o contraseña incorrectos.",
         OperationId = "SignIn")]
     [SwaggerResponse(StatusCodes.Status200OK, "Autenticación exitosa. Retorna el usuario y el token JWT.", typeof(AuthenticatedUserResource))]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario o contraseña incorrectos.")]
     public async Task<IActionResult> SignIn([FromBody] SignInResource signInResource)
     {
-        var signInCommand = SignInCommandFromResourceAssembler.ToCommandFromResource(signInResource);
-        var authenticatedUser = await userCommandService.Handle(signInCommand);
-        var resource =
-            AuthenticatedUserResourceFromEntityAssembler.ToResourceFromEntity(authenticatedUser.user,
-                authenticatedUser.token);
-        return Ok(resource);
+        try
+        {
+            var signInCommand = SignInCommandFromResourceAssembler.ToCommandFromResource(signInResource);
+            var authenticatedUser = await userCommandService.Handle(signInCommand);
+            var resource =
+                AuthenticatedUserResourceFromEntityAssembler.ToResourceFromEntity(authenticatedUser.user,
+                    authenticatedUser.token);
+            return Ok(resource);
+        }
+        catch (UnauthorizedAccessException e)
+        {
+            return Unauthorized(new { message = e.Message });
+        }
     }
 
     /// <summary>
@@ -73,14 +81,28 @@ public class AuthenticationController(
                       "asociado con el Nombre, Apellido y Correo proporcionados.",
         OperationId = "SignUp")]
     [SwaggerResponse(StatusCodes.Status200OK, "El usuario fue creado y registrado exitosamente en la base de datos.")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de registro inválidos (campos vacíos, email o rol inválido).")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "El username ya está registrado.")]
     public async Task<IActionResult> SignUp([FromBody] SignUpResource signUpResource)
     {
-        var signUpCommand = SignUpCommandFromResourceAssembler.ToCommandFromResource(signUpResource);
-        var userId = await userCommandService.Handle(signUpCommand);
+        try
+        {
+            var signUpCommand = SignUpCommandFromResourceAssembler.ToCommandFromResource(signUpResource);
+            var userId = await userCommandService.Handle(signUpCommand);
 
-        // Auto-create profile in the Profiles bounded context
-        await profilesContextFacade.CreateUserProfile(userId, signUpResource.FirstName, signUpResource.LastName, signUpResource.Email);
+            // Auto-create profile in the Profiles bounded context
+            await profilesContextFacade.CreateUserProfile(userId, signUpResource.FirstName.Trim(),
+                signUpResource.LastName.Trim(), signUpResource.Email.Trim());
 
-        return Ok(new { message = "User created successfully" });
+            return Ok(new { message = "User created successfully" });
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(new { message = e.Message });
+        }
+        catch (InvalidOperationException e)
+        {
+            return Conflict(new { message = e.Message });
+        }
     }
 }

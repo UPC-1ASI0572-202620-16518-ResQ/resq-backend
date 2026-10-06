@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using ResQ.API.Incident_Management.Domain.Model.Queries;
 using ResQ.API.Incident_Management.Domain.Services;
 using ResQ.API.Incident_Management.Interfaces.REST.Resources;
@@ -13,6 +14,7 @@ namespace ResQ.API.Incident_Management.Interfaces.REST;
 [ApiController]
 [Route("api/v1/incidents")]
 [Produces("application/json")]
+[Authorize]
 public class IncidentsController(IIncidentCommandService incidentCommandService, IIncidentQueryService incidentQueryService) : ControllerBase
 {
 
@@ -60,23 +62,30 @@ Respuesta Exitosa (201 Created)
 Retorna el incidente creado con su identificador, zona, tipo, nivel y estado actual.", 
         OperationId = "CreateIncident")]
     [SwaggerResponse(StatusCodes.Status201Created, "Incident created")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid zone, risk type or risk level")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "The zone does not exist in the organization (validated with Building Management)")]
     public async Task<IActionResult> CreateIncident([FromBody] CreateIncidentResource resource)
     {
-        var command = CreateIncidentCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var incident = await incidentCommandService.Handle(command);
-        
-        if (incident == null)
-            return BadRequest();
-        
-        var response = IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident);
-        
-        return CreatedAtAction(
-            nameof(GetIncidentById),
-            new
-            {
-                id = incident.Id.Value
-            },
-            response);
+        if (HttpContext.Items["OrganizationId"] is not Guid organizationId) return Unauthorized();
+
+        return await ExecuteAsync(async () =>
+        {
+            var command = CreateIncidentCommandFromResourceAssembler.ToCommandFromResource(organizationId, resource);
+            var incident = await incidentCommandService.Handle(command);
+
+            if (incident == null)
+                return BadRequest();
+
+            var response = IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident);
+
+            return CreatedAtAction(
+                nameof(GetIncidentById),
+                new
+                {
+                    id = incident.Id.Value
+                },
+                response);
+        });
     }
 
 
@@ -127,6 +136,22 @@ Retorna la información actual del incidente, incluyendo:
     }
     
     /// <summary>
+    /// Lista el historial de incidentes, opcionalmente filtrado por zona.
+    /// </summary>
+    [HttpGet]
+    [SwaggerOperation(Summary = "Get incidents",
+        Description = "Obtiene el historial de incidentes. Filtro opcional `zoneId` para ver solo los de una zona.",
+        OperationId = "GetIncidents")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Incident history")]
+    public async Task<IActionResult> GetIncidents([FromQuery] Guid? zoneId)
+    {
+        var query = new GetHistoricalIncidentsQuery(zoneId == Guid.Empty ? null : zoneId, null, null, null);
+        var incidents = await incidentQueryService.Handle(query);
+
+        return Ok(incidents.Select(IncidentResourceFromEntityAssembler.ToResourceFromEntity));
+    }
+
+    /// <summary>
     /// Cambia el estado actual de un incidente.
     /// </summary>
     [HttpPut("{id:guid}/status")]
@@ -146,9 +171,11 @@ Parámetro de Ruta
 ---
 ```JSON de Prueba
 {
-  ""status"": ""InProgress""
+  ""status"": ""Closed""
 }
 ```
+
+**Nota:** para pasar a `InProgress` se usa `/assign` (requiere responsable) y para pasar a `Resolved` se usa `/resolve` (requiere notas). Este endpoint los rechaza con 409.
 
 ---
 Estados Soportados
@@ -164,16 +191,21 @@ Respuesta Exitosa (200 OK)
 
 Retorna el incidente con su nuevo estado.", 
         OperationId = "ChangeIncidentStatus")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid status value")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Incident not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Status transition not allowed")]
     public async Task<IActionResult> ChangeStatus(Guid id, [FromBody] UpdateIncidentStatusResource resource)
     {
+        return await ExecuteAsync(async () =>
+        {
+            var command = UpdateIncidentStatusCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            var incident = await incidentCommandService.Handle(command);
 
-        var command = UpdateIncidentStatusCommandFromResourceAssembler.ToCommandFromResource(id, resource);
-        var incident = await incidentCommandService.Handle(command);
-        
-        if (incident == null)
-            return NotFound();
-        
-        return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident));
+            if (incident == null)
+                return NotFound();
+
+            return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident));
+        });
     }
     
     /// <summary>
@@ -214,15 +246,21 @@ Respuesta Exitosa (200 OK)
 
 Retorna el incidente actualizado con su nuevo estado y responsable asignado.", 
         OperationId = "AssignIncident")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid attendant id")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Incident not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "The incident is not active")]
     public async Task<IActionResult> AssignIncident(Guid id, [FromBody] AssignIncidentResource resource)
     {
-        var command = AssignIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
-        var incident = await incidentCommandService.Handle(command);
-        
-        if (incident == null)
-            return NotFound();
-        
-        return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident));
+        return await ExecuteAsync(async () =>
+        {
+            var command = AssignIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            var incident = await incidentCommandService.Handle(command);
+
+            if (incident == null)
+                return NotFound();
+
+            return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident));
+        });
     }
     
     /// <summary>
@@ -261,14 +299,43 @@ Respuesta Exitosa (200 OK)
 
 Retorna el incidente actualizado con estado Resolved.",
         OperationId = "ResolveIncident")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Resolution notes are required")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Incident not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "The incident cannot be resolved in its current status")]
     public async Task<IActionResult> ResolveIncident(Guid id, [FromBody] ResolveIncidentResource resource)
     {
-        var command = ResolveIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
-        var incident = await incidentCommandService.Handle(command);
-        
-        if (incident == null)
-            return NotFound();
-        
-        return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident));
+        return await ExecuteAsync(async () =>
+        {
+            var command = ResolveIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            var incident = await incidentCommandService.Handle(command);
+
+            if (incident == null)
+                return NotFound();
+
+            return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident));
+        });
+    }
+
+    /// <summary>
+    /// Traduce las excepciones del dominio a respuestas HTTP: 400 datos inválidos, 404 no encontrado, 409 regla de negocio.
+    /// </summary>
+    private async Task<IActionResult> ExecuteAsync(Func<Task<IActionResult>> action)
+    {
+        try
+        {
+            return await action();
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(new { message = e.Message });
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(new { message = e.Message });
+        }
+        catch (InvalidOperationException e)
+        {
+            return Conflict(new { message = e.Message });
+        }
     }
 }

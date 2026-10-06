@@ -29,7 +29,8 @@ public class AlertsContextFacade(IAlertCommandService alertCommandService) : IAl
             detectedAt,
             recipients
                 .Select(recipient => new NotificationRecipient(recipient.RecipientUserId, recipient.Channel, recipient.Destination))
-                .ToList());
+                .ToList(),
+            []);
 
         var alert = await alertCommandService.Handle(command);
 
