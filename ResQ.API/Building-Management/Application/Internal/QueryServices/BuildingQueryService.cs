@@ -39,4 +39,9 @@ public class BuildingQueryService(IBuildingRepository buildingRepository) : IBui
             query.BuildingId,
             query.ZoneId);
     }
+
+    public async Task<Building?> Handle(GetBuildingByZoneIdQuery query)
+    {
+        return await buildingRepository.FindByZoneIdAndOrganizationIdAsync(query.ZoneId, query.OrganizationId);
+    }
 }

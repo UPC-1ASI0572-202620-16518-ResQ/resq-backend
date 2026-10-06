@@ -99,4 +99,13 @@ public class BuildingRepository(AppDbContext context)
 
         return building?.Zones.FirstOrDefault(z => z.Id == zoneId);
     }
+
+    public async Task<Building?> FindByZoneIdAndOrganizationIdAsync(Guid zoneId, Guid organizationId)
+    {
+        return await Context.Set<Building>()
+            .Include(b => b.Zones)
+            .FirstOrDefaultAsync(b =>
+                b.OrganizationId == organizationId &&
+                b.Zones.Any(z => z.Id == zoneId));
+    }
 }

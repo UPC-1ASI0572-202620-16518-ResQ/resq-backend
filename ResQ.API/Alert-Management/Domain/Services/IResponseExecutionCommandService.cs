@@ -6,6 +6,4 @@ namespace ResQ.API.Alert_Management.Domain.Services;
 public interface IResponseExecutionCommandService
 {
     Task<ResponseExecution?> Handle(DecideResponseAuthorizationCommand command);
-
-    Task<ResponseExecution?> Handle(RecordResponseExecutionResultCommand command);
 }

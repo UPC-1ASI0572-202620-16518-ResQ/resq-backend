@@ -25,4 +25,10 @@ public class BuildingsContextFacade(IBuildingQueryService buildingQueryService) 
 
         return true;
     }
+
+    public async Task<bool> ZoneExistsAsync(Guid organizationId, Guid zoneId)
+    {
+        var building = await buildingQueryService.Handle(new GetBuildingByZoneIdQuery(organizationId, zoneId));
+        return building != null;
+    }
 }

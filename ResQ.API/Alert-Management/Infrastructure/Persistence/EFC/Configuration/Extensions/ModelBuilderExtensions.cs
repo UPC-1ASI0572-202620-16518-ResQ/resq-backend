@@ -20,7 +20,7 @@ public static class ModelBuilderExtensions
         builder.Entity<Alert>().HasKey(a => a.Id);
         builder.Entity<Alert>().Property(a => a.Id).ValueGeneratedNever();
         builder.Entity<Alert>().Property(a => a.OrganizationId).IsRequired();
-        builder.Entity<Alert>().Property(a => a.GeneratedAt).IsRequired();
+        builder.Entity<Alert>().Property(a => a.GeneratedAt).HasPrecision(6).IsRequired();
 
         // Embedded Pattern for AlertContext
         builder.Entity<Alert>().OwnsOne(a => a.Context, context =>
@@ -30,7 +30,7 @@ public static class ModelBuilderExtensions
             context.Property(c => c.SeverityCode).HasColumnName("SeverityCode").HasMaxLength(20).IsRequired();
             context.Property(c => c.BuildingId).HasColumnName("BuildingId");
             context.Property(c => c.ZoneId).HasColumnName("ZoneId");
-            context.Property(c => c.DetectedAt).HasColumnName("DetectedAt").IsRequired();
+            context.Property(c => c.DetectedAt).HasColumnName("DetectedAt").HasPrecision(6).IsRequired();
         });
         builder.Entity<Alert>().Navigation(a => a.Context).IsRequired();
 
@@ -43,35 +43,10 @@ public static class ModelBuilderExtensions
         builder.Entity<NotificationDelivery>().Property(d => d.Channel).HasMaxLength(30).IsRequired();
         builder.Entity<NotificationDelivery>().Property(d => d.Destination).HasMaxLength(200).IsRequired();
         builder.Entity<NotificationDelivery>().Property(d => d.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
-        builder.Entity<NotificationDelivery>().Property(d => d.RequestedAt).IsRequired();
-        builder.Entity<NotificationDelivery>().Property(d => d.CompletedAt);
+        builder.Entity<NotificationDelivery>().Property(d => d.RequestedAt).HasPrecision(6).IsRequired();
+        builder.Entity<NotificationDelivery>().Property(d => d.CompletedAt).HasPrecision(6);
         builder.Entity<NotificationDelivery>().Property(d => d.FailureReason).HasMaxLength(500);
         builder.Entity<Alert>().HasMany(a => a.Deliveries).WithOne().HasForeignKey("AlertId").OnDelete(DeleteBehavior.Cascade);
-
-        // ResponsePolicy Aggregate
-        builder.Entity<ResponsePolicy>().ToTable("ResponsePolicies");
-        builder.Entity<ResponsePolicy>().HasKey(p => p.Id);
-        builder.Entity<ResponsePolicy>().Property(p => p.Id).ValueGeneratedNever();
-        builder.Entity<ResponsePolicy>().Property(p => p.OrganizationId).IsRequired();
-        builder.Entity<ResponsePolicy>().Property(p => p.RiskTypeCode).HasMaxLength(50).IsRequired();
-        builder.Entity<ResponsePolicy>().Property(p => p.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
-        builder.Entity<ResponsePolicy>().Property(p => p.CreatedAt).IsRequired();
-        builder.Entity<ResponsePolicy>().Property(p => p.UpdatedAt).IsRequired();
-        builder.Entity<ResponsePolicy>().Property(p => p.Version).IsRequired();
-        builder.Entity<ResponsePolicy>().Ignore(p => p.IsActive);
-        builder.Entity<ResponsePolicy>().HasIndex(p => new { p.OrganizationId, p.RiskTypeCode });
-
-        // ResponseAction belongs to the ResponsePolicy Aggregate
-        builder.Entity<ResponseAction>().ToTable("ResponseActions");
-        builder.Entity<ResponseAction>().HasKey(a => a.Id);
-        builder.Entity<ResponseAction>().Property(a => a.Id).ValueGeneratedNever();
-        builder.Entity<ResponseAction>().Property<Guid>("PolicyId").HasColumnName("policy_id");
-        builder.Entity<ResponseAction>().Property(a => a.ActionCode).HasMaxLength(80).IsRequired();
-        builder.Entity<ResponseAction>().Property(a => a.TargetDeviceId).IsRequired();
-        builder.Entity<ResponseAction>().Property(a => a.TargetCapabilityCode).HasMaxLength(80).IsRequired();
-        builder.Entity<ResponseAction>().Property(a => a.AuthorizationMode).HasConversion<string>().HasMaxLength(20).IsRequired();
-        builder.Entity<ResponseAction>().Property(a => a.Critical).IsRequired();
-        builder.Entity<ResponsePolicy>().HasMany(p => p.Actions).WithOne().HasForeignKey("PolicyId").OnDelete(DeleteBehavior.Cascade);
 
         // ResponseExecution Aggregate
         builder.Entity<ResponseExecution>().ToTable("ResponseExecutions");
@@ -80,10 +55,9 @@ public static class ModelBuilderExtensions
         builder.Entity<ResponseExecution>().Property(e => e.OrganizationId).IsRequired();
         builder.Entity<ResponseExecution>().Property(e => e.AlertId).IsRequired();
         builder.Entity<ResponseExecution>().Property(e => e.RiskDetectionId).HasMaxLength(64).IsRequired();
-        builder.Entity<ResponseExecution>().Property(e => e.PolicyId).IsRequired();
         builder.Entity<ResponseExecution>().Property(e => e.Status).HasConversion<string>().HasMaxLength(30).IsRequired();
-        builder.Entity<ResponseExecution>().Property(e => e.RequestedAt).IsRequired();
-        builder.Entity<ResponseExecution>().HasIndex(e => new { e.OrganizationId, e.RiskDetectionId });
+        builder.Entity<ResponseExecution>().Property(e => e.RequestedAt).HasPrecision(6).IsRequired();
+        builder.Entity<ResponseExecution>().HasIndex(e => new { e.OrganizationId, e.AlertId });
 
         // Embedded Pattern for ResponseActionSnapshot
         builder.Entity<ResponseExecution>().OwnsOne(e => e.Action, action =>
@@ -103,16 +77,7 @@ public static class ModelBuilderExtensions
             authorization.Property(a => a.AuthorizationId).HasColumnName("AuthorizationId").IsRequired();
             authorization.Property(a => a.Decision).HasColumnName("AuthorizationDecision").HasConversion<string>().HasMaxLength(16).IsRequired();
             authorization.Property(a => a.DecidedByUserId).HasColumnName("DecidedByUserId").HasMaxLength(64).IsRequired();
-            authorization.Property(a => a.DecidedAt).HasColumnName("DecidedAt").IsRequired();
-        });
-
-        // Embedded Pattern for the optional ExecutionResult
-        builder.Entity<ResponseExecution>().OwnsOne(e => e.Result, result =>
-        {
-            result.Property(r => r.Successful).HasColumnName("ResultSuccessful").IsRequired();
-            result.Property(r => r.ResultCode).HasColumnName("ResultCode").HasMaxLength(80).IsRequired();
-            result.Property(r => r.Message).HasColumnName("ResultMessage").HasMaxLength(500);
-            result.Property(r => r.CompletedAt).HasColumnName("ResultCompletedAt").IsRequired();
+            authorization.Property(a => a.DecidedAt).HasColumnName("DecidedAt").HasPrecision(6).IsRequired();
         });
 
         return builder;

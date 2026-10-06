@@ -10,4 +10,5 @@ public record GenerateAlertCommand(
     Guid? BuildingId,
     Guid? ZoneId,
     DateTimeOffset DetectedAt,
-    IReadOnlyCollection<NotificationRecipient> Recipients);
+    IReadOnlyCollection<NotificationRecipient> Recipients,
+    IReadOnlyCollection<ResponseActionSnapshot> ResponseActions);

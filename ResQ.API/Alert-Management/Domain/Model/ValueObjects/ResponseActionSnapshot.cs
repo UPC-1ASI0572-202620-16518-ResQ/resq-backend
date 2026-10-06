@@ -1,8 +1,8 @@
 namespace ResQ.API.Alert_Management.Domain.Model.ValueObjects;
 
 /// <summary>
-/// Copy of the policy action at the moment the execution was requested,
-/// so later policy changes do not alter the execution history.
+/// Response action requested for an alert: which actuator capability of which device must act,
+/// and whether a human has to authorize it first.
 /// </summary>
 public record ResponseActionSnapshot
 {
@@ -25,13 +25,28 @@ public record ResponseActionSnapshot
     {
     }
 
-    public ResponseActionSnapshot(Guid actionId, string actionCode, Guid targetDeviceId, string targetCapabilityCode,
+    public ResponseActionSnapshot(string actionCode, Guid targetDeviceId, string targetCapabilityCode,
         EAuthorizationMode authorizationMode, bool critical)
     {
-        ActionId = actionId;
-        ActionCode = actionCode;
+        if (string.IsNullOrWhiteSpace(actionCode))
+            throw new ArgumentException("Action code is required.");
+
+        if (actionCode.Trim().Length > 80)
+            throw new ArgumentException("Action code cannot exceed 80 characters.");
+
+        if (targetDeviceId == Guid.Empty)
+            throw new ArgumentException("Target device id is required.");
+
+        if (string.IsNullOrWhiteSpace(targetCapabilityCode))
+            throw new ArgumentException("Target capability code is required.");
+
+        if (targetCapabilityCode.Trim().Length > 80)
+            throw new ArgumentException("Target capability code cannot exceed 80 characters.");
+
+        ActionId = Guid.NewGuid();
+        ActionCode = actionCode.Trim().ToUpperInvariant();
         TargetDeviceId = targetDeviceId;
-        TargetCapabilityCode = targetCapabilityCode;
+        TargetCapabilityCode = targetCapabilityCode.Trim();
         AuthorizationMode = authorizationMode;
         Critical = critical;
     }

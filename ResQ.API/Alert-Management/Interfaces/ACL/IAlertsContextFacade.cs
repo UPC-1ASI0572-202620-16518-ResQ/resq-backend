@@ -7,7 +7,7 @@ namespace ResQ.API.Alert_Management.Interfaces.ACL;
 public interface IAlertsContextFacade
 {
     /// <summary>
-    /// Generates an alert for a confirmed risk detection and requests the actions of the active response policy.
+    /// Generates an alert for a confirmed risk detection.
     /// </summary>
     /// <returns>The identifier of the generated alert.</returns>
     Task<Guid> GenerateAlertAsync(

@@ -2,5 +2,5 @@
 
 public interface IIncidentContextFacade
 {
-    Task<Guid> CreateIncident(Guid zoneId, string type, string level);
+    Task<Guid> CreateIncident(Guid organizationId, Guid zoneId, string type, string level);
 }

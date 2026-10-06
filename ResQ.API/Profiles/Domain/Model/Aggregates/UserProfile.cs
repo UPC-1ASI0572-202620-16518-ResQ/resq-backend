@@ -59,6 +59,16 @@ public class UserProfile
     {
         var newEmail = ResQ.API.Shared.Application.Internal.PartialUpdateHelper.ShouldIgnore(email) ? ContactInfo.Email : email!.Trim();
         var newPhone = ResQ.API.Shared.Application.Internal.PartialUpdateHelper.ShouldIgnore(phoneNumber) ? ContactInfo.PhoneNumber : phoneNumber!.Trim();
+
+        if (newEmail.Length > 150 || !EmailPattern.IsMatch(newEmail))
+            throw new ArgumentException("Email must be a valid email address of up to 150 characters.");
+
+        if (newPhone.Length > 20)
+            throw new ArgumentException("Phone number cannot exceed 20 characters.");
+
         ContactInfo = new ContactInformation(newEmail, newPhone);
     }
+
+    private static readonly System.Text.RegularExpressions.Regex EmailPattern =
+        new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", System.Text.RegularExpressions.RegexOptions.Compiled);
 }

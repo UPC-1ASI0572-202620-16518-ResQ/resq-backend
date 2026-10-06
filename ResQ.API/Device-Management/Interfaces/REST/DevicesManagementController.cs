@@ -437,7 +437,7 @@ Retorna el DeviceResource con la nueva ubicación.",
     [SwaggerOperation(
         Summary = "Cambiar estado administrativo",
         Description = @"**Propósito:**
-Cambia el estado administrativo del dispositivo (inactive, active, suspended, retired).
+Cambia el estado administrativo del dispositivo (inactive, active, retired). Para activarlo, su edificación y zona deben estar activas (409 si no).
 
 ---
 ### Encabezados Requeridos (Headers)
