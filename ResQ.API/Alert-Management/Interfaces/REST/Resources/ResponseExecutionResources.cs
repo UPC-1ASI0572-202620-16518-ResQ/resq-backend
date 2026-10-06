@@ -9,12 +9,10 @@ public record ResponseExecutionResource(
     Guid OrganizationId,
     Guid AlertId,
     string RiskDetectionId,
-    Guid PolicyId,
     ResponseActionSnapshotResource Action,
     string Status,
     DateTimeOffset RequestedAt,
-    ResponseAuthorizationResource? Authorization,
-    ExecutionResultResource? Result);
+    ResponseAuthorizationResource? Authorization);
 
 /// <summary>
 /// Matches ResponseActionSnapshotResourceDto in the frontend. AuthorizationMode is AUTOMATIC or HUMAN_REQUIRED.
@@ -35,12 +33,3 @@ public record ResponseAuthorizationResource(
     string Decision,
     string DecidedByUserId,
     DateTimeOffset DecidedAt);
-
-/// <summary>
-/// Matches ExecutionResultResourceDto in the frontend.
-/// </summary>
-public record ExecutionResultResource(
-    bool Successful,
-    string ResultCode,
-    string? Message,
-    DateTimeOffset CompletedAt);

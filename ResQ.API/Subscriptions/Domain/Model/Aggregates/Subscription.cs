@@ -35,6 +35,9 @@ public class Subscription
         if (endDate <= startDate)
             throw new ArgumentException("End date must be greater than start date.", nameof(endDate));
 
+        if (endDate <= DateTime.UtcNow)
+            throw new ArgumentException("End date must be in the future.", nameof(endDate));
+
         return new Subscription(
             SubscriptionId.New(),
             organizationId,

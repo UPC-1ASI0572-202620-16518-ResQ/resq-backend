@@ -10,4 +10,5 @@ public interface IBuildingQueryService
     Task<PagedResult<Building>> Handle(GetBuildingsQuery query);
     Task<PagedResult<Zone>> Handle(GetZonesByBuildingIdQuery query);
     Task<Zone?> Handle(GetZoneByIdQuery query);
+    Task<Building?> Handle(GetBuildingByZoneIdQuery query);
 }

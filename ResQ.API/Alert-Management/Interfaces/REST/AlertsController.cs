@@ -19,7 +19,9 @@ namespace ResQ.API.Alert_Management.Interfaces.REST;
 [Authorize]
 public class AlertsController(
     IAlertCommandService alertCommandService,
-    IAlertQueryService alertQueryService) : ControllerBase
+    IAlertQueryService alertQueryService,
+    IResponseExecutionCommandService responseExecutionCommandService,
+    IResponseExecutionQueryService responseExecutionQueryService) : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation(
@@ -79,14 +81,16 @@ Obtiene las alertas de la organización, de la más reciente a la más antigua.
     [SwaggerOperation(
         Summary = "Generar alerta",
         Description = @"**Propósito:**
-Genera una alerta a partir de una detección de riesgo y solicita una notificación por destinatario.
-Si existe una política de respuesta **ACTIVE** para el `riskTypeCode`, se crean sus ejecuciones de respuesta:
-las acciones `AUTOMATIC` quedan en `EXECUTION_REQUESTED` y las `HUMAN_REQUIRED` en `PENDING_AUTHORIZATION`.
+Genera una alerta a partir de una detección de riesgo, solicita una notificación por destinatario y,
+si se envían `responseActions`, crea una ejecución de respuesta por acción:
+las `AUTOMATIC` quedan en `EXECUTION_REQUESTED` y las `HUMAN_REQUIRED` en `PENDING_AUTHORIZATION`.
 
 Mientras no exista el contexto Risk Detection, este endpoint es el punto de entrada para generar alertas
 (Risk Detection usará después `IAlertsContextFacade`).
 
 **Integración con Building Management:** si se envía `buildingId` (y opcionalmente `zoneId`), se valida que existan y estén activos.
+
+**Integración con Device Management:** cada `targetDeviceId` debe ser un dispositivo activo con una capacidad de actuación `targetCapabilityCode`.
 
 ---
 ### Encabezados Requeridos (Headers)
@@ -109,6 +113,15 @@ Mientras no exista el contexto Risk Detection, este endpoint es el punto de entr
       ""channel"": ""PUSH"",
       ""destination"": ""registered-mobile-device""
     }
+  ],
+  ""responseActions"": [
+    {
+      ""actionCode"": ""CLOSE_GAS_VALVE"",
+      ""targetDeviceId"": ""{deviceId}"",
+      ""targetCapabilityCode"": ""gas-valve"",
+      ""authorizationMode"": ""HUMAN_REQUIRED"",
+      ""critical"": true
+    }
   ]
 }
 ```
@@ -121,7 +134,7 @@ Retorna el AlertResource con las notificaciones en estado `PENDING`.",
         OperationId = "GenerateAlert")]
     [SwaggerResponse(StatusCodes.Status201Created, "Alerta generada", typeof(AlertResource))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos inválidos en el payload")]
-    [SwaggerResponse(StatusCodes.Status409Conflict, "Edificación o zona inexistente o inactiva")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Edificación, zona o dispositivo inexistente o inactivo")]
     public async Task<IActionResult> GenerateAlert([FromBody] GenerateAlertResource resource)
     {
         if (!HttpContext.TryGetOrganizationId(out var organizationId)) return Unauthorized();
@@ -138,40 +151,66 @@ Retorna el AlertResource con las notificaciones en estado `PENDING`.",
         });
     }
 
-    [HttpPut("{alertId:guid}/deliveries/{deliveryId:guid}/status")]
+    [HttpGet("{alertId:guid}/response-executions")]
     [SwaggerOperation(
-        Summary = "Registrar resultado de notificación",
+        Summary = "Listar ejecuciones de respuesta de una alerta",
         Description = @"**Propósito:**
-Registra el resultado informado por el proveedor de notificaciones para una entrega `PENDING`.
+Obtiene las acciones de respuesta solicitadas para la alerta (p. ej. cerrar una válvula de gas), en el orden en que se pidieron.
+
+Estados: `EXECUTION_REQUESTED` (automática), `PENDING_AUTHORIZATION` (requiere decisión humana), `AUTHORIZED` o `REJECTED`.",
+        OperationId = "GetResponseExecutionsByAlertId")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Ejecuciones de la alerta", typeof(IEnumerable<ResponseExecutionResource>))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Alerta no encontrada")]
+    public async Task<IActionResult> GetResponseExecutionsByAlertId(Guid alertId)
+    {
+        if (!HttpContext.TryGetOrganizationId(out var organizationId)) return Unauthorized();
+
+        var alert = await alertQueryService.Handle(new GetAlertByIdQuery(organizationId, alertId));
+
+        if (alert is null) return NotFound(new { message = "Alert not found." });
+
+        var executions = await responseExecutionQueryService.Handle(new GetResponseExecutionsByAlertIdQuery(organizationId, alertId));
+
+        return Ok(executions.Select(ResponseExecutionResourceFromEntityAssembler.ToResourceFromEntity));
+    }
+
+    [HttpPut("{alertId:guid}/response-executions/{responseExecutionId:guid}/authorization")]
+    [SwaggerOperation(
+        Summary = "Autorizar o rechazar una ejecución de respuesta",
+        Description = @"**Propósito:**
+Registra la decisión humana sobre una ejecución `HUMAN_REQUIRED` que está en `PENDING_AUTHORIZATION`.
+El usuario que decide se toma del token.
 
 ---
 ### JSON de Prueba
 ```json
 {
-  ""status"": ""FAILED"",
-  ""failureReason"": ""The push provider did not confirm delivery.""
+  ""decision"": ""APPROVED""
 }
 ```
-`status` admite `DELIVERED` o `FAILED`; `failureReason` es obligatorio cuando falla.",
-        OperationId = "RecordNotificationDeliveryOutcome")]
-    [SwaggerResponse(StatusCodes.Status200OK, "Alerta actualizada", typeof(AlertResource))]
-    [SwaggerResponse(StatusCodes.Status400BadRequest, "Estado o motivo inválido")]
-    [SwaggerResponse(StatusCodes.Status404NotFound, "Alerta o entrega no encontrada")]
-    [SwaggerResponse(StatusCodes.Status409Conflict, "La entrega ya tiene un resultado registrado")]
-    public async Task<IActionResult> RecordNotificationDeliveryOutcome(Guid alertId, Guid deliveryId,
-        [FromBody] RecordNotificationDeliveryOutcomeResource resource)
+`decision` admite `APPROVED` o `REJECTED`.",
+        OperationId = "DecideResponseAuthorization")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Ejecución actualizada", typeof(ResponseExecutionResource))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Decisión inválida")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Alerta o ejecución no encontrada")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "La ejecución no requiere autorización o ya fue decidida")]
+    public async Task<IActionResult> DecideResponseAuthorization(Guid alertId, Guid responseExecutionId,
+        [FromBody] DecideResponseAuthorizationResource resource)
     {
         if (!HttpContext.TryGetOrganizationId(out var organizationId)) return Unauthorized();
 
+        var userId = HttpContext.GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+
         return await this.ExecuteAsync(async () =>
         {
-            var command = RecordNotificationDeliveryOutcomeCommandFromResourceAssembler
-                .ToCommandFromResource(organizationId, alertId, deliveryId, resource);
-            var alert = await alertCommandService.Handle(command);
+            var command = DecideResponseAuthorizationCommandFromResourceAssembler
+                .ToCommandFromResource(organizationId, alertId, responseExecutionId, userId, resource);
+            var execution = await responseExecutionCommandService.Handle(command);
 
-            if (alert is null) return NotFound(new { message = "Alert not found." });
+            if (execution is null) return NotFound(new { message = "Response execution not found." });
 
-            return Ok(AlertResourceFromEntityAssembler.ToResourceFromEntity(alert));
+            return Ok(ResponseExecutionResourceFromEntityAssembler.ToResourceFromEntity(execution));
         });
     }
 }

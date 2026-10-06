@@ -1,4 +1,5 @@
-﻿using ResQ.API.Incident_Management.Domain.Model.Aggregates;
+﻿using ResQ.API.Building_Management.Interfaces.ACL;
+using ResQ.API.Incident_Management.Domain.Model.Aggregates;
 using ResQ.API.Incident_Management.Domain.Model.Commands;
 using ResQ.API.Incident_Management.Domain.Model.ValueObjects;
 using ResQ.API.Incident_Management.Domain.Repositories;
@@ -9,12 +10,17 @@ namespace ResQ.API.Incident_Management.Application.Internal.CommandServices;
 
 public class IncidentCommandService(
     IIncidentRepository incidentRepository,
+    IBuildingsContextFacade buildingsContextFacade,
     IUnitOfWork unitOfWork)
     : IIncidentCommandService
 {
     public async Task<Incident?> Handle(CreateIncidentCommand command)
     {
         var zoneId = new ZoneId(command.ZoneId);
+
+        // The zone is an external reference validated through the Building Management ACL
+        if (!await buildingsContextFacade.ZoneExistsAsync(command.OrganizationId, zoneId.Value))
+            throw new InvalidOperationException("The specified zone does not exist in the organization.");
 
         var riskType = ParseRiskType(command.Type);
         var riskLevel = ParseRiskLevel(command.Level);

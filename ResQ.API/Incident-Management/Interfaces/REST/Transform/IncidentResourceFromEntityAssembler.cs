@@ -12,6 +12,10 @@ public static class IncidentResourceFromEntityAssembler
             entity.ZoneId.Value,
             entity.Type.ToString(),
             entity.Level.ToString(),
-            entity.Status.ToString());
+            entity.Status.ToString(),
+            entity.AssignedTo?.Value,
+            entity.CreatedAt,
+            entity.ResolvedAt,
+            entity.ResolutionNotes);
     }
 }

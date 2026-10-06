@@ -13,17 +13,14 @@ public static class AlertContextDependencyInjection
     {
         // Repositories
         services.AddScoped<IAlertRepository, AlertRepository>();
-        services.AddScoped<IResponsePolicyRepository, ResponsePolicyRepository>();
         services.AddScoped<IResponseExecutionRepository, ResponseExecutionRepository>();
 
         // Command Services
         services.AddScoped<IAlertCommandService, AlertCommandService>();
-        services.AddScoped<IResponsePolicyCommandService, ResponsePolicyCommandService>();
         services.AddScoped<IResponseExecutionCommandService, ResponseExecutionCommandService>();
 
         // Query Services
         services.AddScoped<IAlertQueryService, AlertQueryService>();
-        services.AddScoped<IResponsePolicyQueryService, ResponsePolicyQueryService>();
         services.AddScoped<IResponseExecutionQueryService, ResponseExecutionQueryService>();
 
         // ACL Facade

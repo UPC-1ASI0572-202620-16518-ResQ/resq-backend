@@ -5,7 +5,5 @@ namespace ResQ.API.Alert_Management.Domain.Services;
 
 public interface IResponseExecutionQueryService
 {
-    Task<ResponseExecution?> Handle(GetResponseExecutionByIdQuery query);
-
-    Task<IEnumerable<ResponseExecution>> Handle(GetResponseExecutionsQuery query);
+    Task<IEnumerable<ResponseExecution>> Handle(GetResponseExecutionsByAlertIdQuery query);
 }

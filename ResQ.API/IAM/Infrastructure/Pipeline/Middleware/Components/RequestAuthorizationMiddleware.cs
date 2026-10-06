@@ -24,7 +24,7 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
     /// <param name="tokenService">Service used to validate JWT tokens.</param>
     /// <param name="configuration"> Service used to configure the initial parameters.</param>
     /// <returns>A task that represents the completion of request processing.</returns>
-    /// <exception cref="Exception">Thrown when the token is missing or invalid.</exception>
+    /// <remarks>Responds with 401 Unauthorized when the token is missing, invalid or belongs to an unknown user.</remarks>
     public async Task InvokeAsync(HttpContext context, IUserQueryService userQueryService, ITokenService tokenService, IConfiguration configuration)
     {
         Console.WriteLine("Entering InvokeAsync");
@@ -57,17 +57,29 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
             .Split(" ")
             .Last();
 
-        if (token == null) throw new Exception("Null or invalid token");
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            await RejectAsync(context, "Authorization token is missing.");
+            return;
+        }
 
         var userId = await tokenService.ValidateToken(token);
 
-        if (userId == null) throw new Exception("Invalid token");
+        if (userId == null)
+        {
+            await RejectAsync(context, "Authorization token is invalid or expired.");
+            return;
+        }
 
         var getUserByIdQuery = new GetUserByIdQuery(userId.Value);
 
         var user = await userQueryService.Handle(getUserByIdQuery);
 
-        if (user == null) throw new Exception("User not found");
+        if (user == null)
+        {
+            await RejectAsync(context, "The user of this token no longer exists.");
+            return;
+        }
 
         context.Items["User"] = user;
 
@@ -84,5 +96,16 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
         Console.WriteLine("Successful authorization. Updating Context...");
 
         await next(context);
+    }
+
+    /// <summary>
+    ///     Ends the request with a 401 Unauthorized response and a JSON message.
+    /// </summary>
+    /// <param name="context">The current <see cref="HttpContext" />.</param>
+    /// <param name="message">The reason why the request was rejected.</param>
+    private static async Task RejectAsync(HttpContext context, string message)
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await context.Response.WriteAsJsonAsync(new { message });
     }
 }

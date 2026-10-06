@@ -110,12 +110,8 @@ public class DeviceCommandService(
             throw new KeyNotFoundException("Device not found.");
         }
 
-        if (command.Capabilities == null || command.Capabilities.Count == 0)
-        {
-            return device;
-        }
-
-        device.ReplaceCapabilities(command.Capabilities);
+        // An empty list is rejected by the aggregate (a device needs at least one capability)
+        device.ReplaceCapabilities(command.Capabilities ?? []);
 
         deviceRepository.Update(device);
         await unitOfWork.CompleteAsync();
@@ -161,6 +157,19 @@ public class DeviceCommandService(
         if (device == null)
         {
             throw new KeyNotFoundException("Device not found.");
+        }
+
+        // A device can only be put into operation where its building and zone are active
+        if (command.AdministrativeStatus == EDeviceAdministrativeStatus.Active &&
+            device.AdministrativeStatus != EDeviceAdministrativeStatus.Active)
+        {
+            var isLocationValid = await buildingsContextFacade.ValidateAssignmentAsync(
+                command.OrganizationId, device.Assignment.BuildingId, device.Assignment.ZoneId);
+
+            if (!isLocationValid)
+            {
+                throw new InvalidOperationException("The device cannot be activated because its building or zone is not active.");
+            }
         }
 
         device.ChangeAdministrativeStatus(command.AdministrativeStatus);

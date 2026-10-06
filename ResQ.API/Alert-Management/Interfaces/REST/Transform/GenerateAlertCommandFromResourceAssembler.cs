@@ -12,6 +12,15 @@ public static class GenerateAlertCommandFromResourceAssembler
             .Select(recipient => new NotificationRecipient(recipient.RecipientUserId, recipient.Channel, recipient.Destination))
             .ToList();
 
+        var responseActions = (resource.ResponseActions ?? [])
+            .Select(action => new ResponseActionSnapshot(
+                action.ActionCode,
+                action.TargetDeviceId,
+                action.TargetCapabilityCode,
+                EnumCode.Parse<EAuthorizationMode>(action.AuthorizationMode, "authorizationMode"),
+                action.Critical))
+            .ToList();
+
         return new GenerateAlertCommand(
             organizationId,
             resource.RiskDetectionId,
@@ -20,6 +29,7 @@ public static class GenerateAlertCommandFromResourceAssembler
             resource.BuildingId,
             resource.ZoneId,
             resource.DetectedAt,
-            recipients);
+            recipients,
+            responseActions);
     }
 }

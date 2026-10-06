@@ -24,24 +24,14 @@ public static class ResponseExecutionResourceFromEntityAssembler
                 entity.Authorization.DecidedByUserId,
                 entity.Authorization.DecidedAt);
 
-        var result = entity.Result is null
-            ? null
-            : new ExecutionResultResource(
-                entity.Result.Successful,
-                entity.Result.ResultCode,
-                entity.Result.Message,
-                entity.Result.CompletedAt);
-
         return new ResponseExecutionResource(
             entity.Id,
             entity.OrganizationId,
             entity.AlertId,
             entity.RiskDetectionId,
-            entity.PolicyId,
             action,
             EnumCode.ToCode(entity.Status),
             entity.RequestedAt,
-            authorization,
-            result);
+            authorization);
     }
 }

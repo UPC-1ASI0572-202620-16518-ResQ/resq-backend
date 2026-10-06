@@ -4,15 +4,17 @@ using ResQ.API.Alert_Management.Domain.Model.ValueObjects;
 using ResQ.API.Alert_Management.Domain.Repositories;
 using ResQ.API.Alert_Management.Domain.Services;
 using ResQ.API.Building_Management.Interfaces.ACL;
+using ResQ.API.Device_Management.Domain.Model.ValueObjects;
+using ResQ.API.Device_Management.Interfaces.ACL;
 using ResQ.API.Shared.Domain.Repositories;
 
 namespace ResQ.API.Alert_Management.Application.Internal.CommandServices;
 
 public class AlertCommandService(
     IAlertRepository alertRepository,
-    IResponsePolicyRepository responsePolicyRepository,
     IResponseExecutionRepository responseExecutionRepository,
     IBuildingsContextFacade buildingsContextFacade,
+    IDevicesContextFacade devicesContextFacade,
     IUnitOfWork unitOfWork)
     : IAlertCommandService
 {
@@ -36,22 +38,20 @@ public class AlertCommandService(
                 throw new InvalidOperationException("The building or zone does not exist or is not active.");
         }
 
+        // Each response action must target an active device with that actuation capability (Device Management ACL)
+        foreach (var action in command.ResponseActions)
+        {
+            await ValidateResponseActionTargetAsync(command.OrganizationId, action);
+        }
+
         var alert = Alert.Generate(command.OrganizationId, context, command.Recipients);
 
         await alertRepository.AddAsync(alert);
 
-        // The active policy for the risk type defines which response actions are requested
-        var policy = await responsePolicyRepository.FindActiveByRiskTypeCodeAsync(command.OrganizationId, context.RiskTypeCode);
-
-        if (policy is not null)
+        foreach (var action in command.ResponseActions)
         {
-            foreach (var action in policy.Actions)
-            {
-                var execution = ResponseExecution.Request(
-                    command.OrganizationId, alert.Id, context.RiskDetectionId, policy.Id, action);
-
-                await responseExecutionRepository.AddAsync(execution);
-            }
+            var execution = ResponseExecution.Request(command.OrganizationId, alert.Id, context.RiskDetectionId, action);
+            await responseExecutionRepository.AddAsync(execution);
         }
 
         await unitOfWork.CompleteAsync();
@@ -59,17 +59,22 @@ public class AlertCommandService(
         return alert;
     }
 
-    public async Task<Alert?> Handle(RecordNotificationDeliveryOutcomeCommand command)
+    private async Task ValidateResponseActionTargetAsync(Guid organizationId, ResponseActionSnapshot action)
     {
-        var alert = await alertRepository.FindByIdAndOrganizationIdAsync(command.AlertId, command.OrganizationId);
+        var device = await devicesContextFacade.GetDeviceCatalogEntry(organizationId, action.TargetDeviceId);
 
-        if (alert is null)
-            throw new KeyNotFoundException("Alert not found.");
+        if (device is null)
+            throw new InvalidOperationException($"Target device '{action.TargetDeviceId}' does not exist.");
 
-        alert.RecordDeliveryOutcome(command.DeliveryId, command.Status, command.FailureReason);
+        if (device.AdministrativeStatus != EDeviceAdministrativeStatus.Active)
+            throw new InvalidOperationException($"Target device '{device.DeviceCode}' is not active.");
 
-        await unitOfWork.CompleteAsync();
+        var hasCapability = device.Capabilities.Any(capability =>
+            capability.Kind == ECapabilityKind.Actuation &&
+            string.Equals(capability.Code, action.TargetCapabilityCode, StringComparison.OrdinalIgnoreCase));
 
-        return alert;
+        if (!hasCapability)
+            throw new InvalidOperationException(
+                $"Target device '{device.DeviceCode}' has no actuation capability '{action.TargetCapabilityCode}'.");
     }
 }

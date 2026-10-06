@@ -84,17 +84,4 @@ public class Alert
 
         return alert;
     }
-
-    /// <summary>
-    /// Records the outcome of one of the notification deliveries.
-    /// </summary>
-    public NotificationDelivery RecordDeliveryOutcome(Guid deliveryId, ENotificationDeliveryStatus status, string? failureReason)
-    {
-        var delivery = _deliveries.FirstOrDefault(item => item.Id == deliveryId)
-                       ?? throw new KeyNotFoundException("Notification delivery not found.");
-
-        delivery.RecordOutcome(status, failureReason);
-
-        return delivery;
-    }
 }

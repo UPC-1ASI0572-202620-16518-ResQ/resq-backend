@@ -20,7 +20,12 @@ public class SubscriptionRepository(AppDbContext context) : BaseRepository<Subsc
 
     public async Task<Subscription?> FindByOrganizationIdAsync(Guid organizationId)
     {
-        return await context.Set<Subscription>().FirstOrDefaultAsync(s => s.OrganizationId == organizationId);
+        // The active subscription wins; otherwise the most recent one (cancelled or expired)
+        return await context.Set<Subscription>()
+            .Where(s => s.OrganizationId == organizationId)
+            .OrderBy(s => s.Status == ESubscriptionStatus.Active ? 0 : 1)
+            .ThenByDescending(s => s.StartDate)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<bool> ExistsByOrganizationIdAsync(Guid organizationId)

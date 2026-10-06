@@ -33,6 +33,7 @@ public static class ModelBuilderExtensions
         builder.Entity<Device>().Property(d => d.UpdatedAt).IsRequired();
         builder.Entity<Device>().Property(d => d.Version).IsRequired();
 
+
         // DeviceCode must be unique inside an organization
         builder.Entity<Device>()
             .HasIndex(d => new
