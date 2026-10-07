@@ -19,10 +19,7 @@
 
     <ItemGroup>
         <Using Include="Xunit"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Subscriptions\AcceptanceTests\" />
+        <Content Include="**/*.feature" />
     </ItemGroup>
 
 </Project>
