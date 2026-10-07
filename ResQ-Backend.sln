@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResQ.API", "ResQ.API\ResQ.API.csproj", "{A74BD8FC-E85D-4973-920D-2D2435297F13}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ResQ.Tests", "ResQ.Tests", "{E8452DAD-18B7-4031-87D2-FF1379E46B8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResQ.Tests", "ResQ.Tests\ResQ.Tests.csproj", "{A5AE0387-5C8A-4080-8589-83B27A3483C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,12 @@ Global
 		{A74BD8FC-E85D-4973-920D-2D2435297F13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A74BD8FC-E85D-4973-920D-2D2435297F13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A74BD8FC-E85D-4973-920D-2D2435297F13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5AE0387-5C8A-4080-8589-83B27A3483C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5AE0387-5C8A-4080-8589-83B27A3483C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5AE0387-5C8A-4080-8589-83B27A3483C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5AE0387-5C8A-4080-8589-83B27A3483C6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A5AE0387-5C8A-4080-8589-83B27A3483C6} = {E8452DAD-18B7-4031-87D2-FF1379E46B8C}
 	EndGlobalSection
 EndGlobal
