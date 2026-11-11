@@ -129,6 +129,30 @@ CREATE TABLE IF NOT EXISTS `response_executions` (
     PRIMARY KEY (`id`),
     KEY `ix_response_executions_organization_id_alert_id` (`organization_id`, `alert_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "sensor_connections", @"
+CREATE TABLE IF NOT EXISTS `sensor_connections` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `sensor_id` char(36) NOT NULL,
+    `status` varchar(16) NOT NULL,
+    `last_heartbeat` datetime(6) NOT NULL,
+    `signal_strength` int NULL,
+    `status_changed_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `ix_sensor_connections_organization_id_sensor_id` (`organization_id`, `sensor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "heartbeat_records", @"
+CREATE TABLE IF NOT EXISTS `heartbeat_records` (
+    `id` char(36) NOT NULL,
+    `sensor_connection_id` char(36) NOT NULL,
+    `timestamp` datetime(6) NOT NULL,
+    `signal_strength` int NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_heartbeat_records_sensor_connection_id` (`sensor_connection_id`),
+    CONSTRAINT `fk_heartbeat_records_sensor_connections_sensor_connection_id` FOREIGN KEY (`sensor_connection_id`) REFERENCES `sensor_connections` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     private static void EnsureTableExists(AppDbContext context, string tableName, string createTableSql)
