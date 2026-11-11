@@ -5,6 +5,7 @@ using ResQ.API.Building_Management.Application.Internal.OutboundServices;
 using ResQ.API.Device_Management.Application.Internal.OutboundServices;
 using ResQ.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using ResQ.API.Profiles.Application.Internal.OutboundServices;
+using ResQ.API.Risk_Detection.Application.Internal.OutboundServices;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Extensions;
 using ResQ.API.Incident_Management.Application.Internal.OutboundServices;
 using ResQ.API.Shared.Infrastructure.Documentation.OpenApi.Configuration.Extensions;
@@ -56,6 +57,9 @@ builder.Services.AddBuildingManagementContextServices();
 
 // Incident Management Bounded Context Services
 builder.Services.AddIncidentManagementContextServices();
+
+// Risk Detection Bounded Context Services
+builder.Services.AddRiskDetectionContextServices();
 
 // Subscriptions Bounded Context Services
 builder.Services.AddSubscriptionContextServices();
