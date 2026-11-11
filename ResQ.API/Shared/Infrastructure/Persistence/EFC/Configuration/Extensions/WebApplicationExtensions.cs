@@ -78,6 +78,63 @@ CREATE TABLE IF NOT EXISTS `device_capabilities` (
     CONSTRAINT `fk_device_capabilities_devices_device_id` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
+        EnsureTableExists(context, "detection_rules", @"
+CREATE TABLE IF NOT EXISTS `detection_rules` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `risk_type_code` varchar(50) NOT NULL,
+    `severity_code` varchar(20) NOT NULL,
+    `variable_type` varchar(50) NOT NULL,
+    `operator` varchar(30) NOT NULL,
+    `threshold` decimal(18,4) NOT NULL,
+    `status` varchar(16) NOT NULL,
+    `configured_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_detection_rules_organization_id_variable_type` (`organization_id`, `variable_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "risk_detections", @"
+CREATE TABLE IF NOT EXISTS `risk_detections` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `rule_id` char(36) NOT NULL,
+    `risk_type_code` varchar(50) NOT NULL,
+    `current_severity_code` varchar(20) NOT NULL,
+    `building_id` char(36) NULL,
+    `zone_id` char(36) NULL,
+    `location_resolution_status` varchar(16) NOT NULL,
+    `detected_at` datetime(6) NOT NULL,
+    `last_evidence_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_risk_detections_organization_id_risk_type_code` (`organization_id`, `risk_type_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "detection_evidences", @"
+CREATE TABLE IF NOT EXISTS `detection_evidences` (
+    `id` char(36) NOT NULL,
+    `risk_detection_id` char(36) NOT NULL,
+    `measurement_id` char(36) NOT NULL,
+    `device_id` char(36) NOT NULL,
+    `variable_type` varchar(50) NOT NULL,
+    `value` decimal(18,4) NOT NULL,
+    `measured_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_detection_evidences_risk_detection_id` (`risk_detection_id`),
+    CONSTRAINT `fk_detection_evidences_risk_detections_risk_detection_id` FOREIGN KEY (`risk_detection_id`) REFERENCES `risk_detections` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "severity_changes", @"
+CREATE TABLE IF NOT EXISTS `severity_changes` (
+    `id` char(36) NOT NULL,
+    `risk_detection_id` char(36) NOT NULL,
+    `previous_severity_code` varchar(20) NOT NULL,
+    `new_severity_code` varchar(20) NOT NULL,
+    `changed_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_severity_changes_risk_detection_id` (`risk_detection_id`),
+    CONSTRAINT `fk_severity_changes_risk_detections_risk_detection_id` FOREIGN KEY (`risk_detection_id`) REFERENCES `risk_detections` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
         EnsureTableExists(context, "alerts", @"
 CREATE TABLE IF NOT EXISTS `alerts` (
     `id` char(36) NOT NULL,

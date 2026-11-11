@@ -8,6 +8,7 @@ using ResQ.API.Building_Management.Infrastructure.Persistence.EFC.Configuration.
 using ResQ.API.Connectivity_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Device_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Incident_Management.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using ResQ.API.Risk_Detection.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using ResQ.API.Subscriptions.Infrastructure.Persistence.EFC.Configuration.Extensions;
 
 namespace ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration;
@@ -66,6 +67,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         
         // Incidents Management Context
         builder.ApplyIncidentConfiguration();
+
+        // Risk Detection Context
+        builder.ApplyRiskDetectionConfiguration();
         
         // Subscriptions Context
         builder.ApplySubscriptionConfiguration();
