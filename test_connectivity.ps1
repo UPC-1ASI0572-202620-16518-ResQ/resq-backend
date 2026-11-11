@@ -15,6 +15,12 @@ function Check($name, $condition) {
     else { Write-Host "  [FAIL] $name" -ForegroundColor Red; $script:failures++ }
 }
 
+# Windows PowerShell 5.1 returns a JSON array as a single object; this enumerates it
+function Get-List($path) {
+    $response = Invoke-RestMethod -Uri "$BaseUrl$path" -Headers $h
+    return ,@($response | ForEach-Object { $_ })
+}
+
 function Get-StatusCode($scriptBlock) {
     try { & $scriptBlock | Out-Null; return 200 }
     catch { return [int]$_.Exception.Response.StatusCode }
@@ -85,7 +91,7 @@ $hb2 = Invoke-RestMethod -Uri "$BaseUrl/api/v1/connectivity/heartbeats" -Method 
 Check "signalStrength -40, still ONLINE" ($hb2.signalStrength -eq -40 -and $hb2.status -eq "ONLINE")
 
 Write-Host "`n=== TEST 7: offline list does not contain an ONLINE sensor ==="
-$offline = @(Invoke-RestMethod -Uri "$BaseUrl/api/v1/connectivity/sensors/offline" -Headers $h)
+$offline = (Get-List "/api/v1/connectivity/sensors/offline")
 Check "sensor not in offline list" (-not ($offline | Where-Object { $_.sensorId -eq $sensorId }))
 
 $wait = $TimeoutSeconds + $ScanIntervalSeconds + 3
@@ -94,18 +100,18 @@ Start-Sleep -Seconds $wait
 $st = Invoke-RestMethod -Uri "$BaseUrl/api/v1/connectivity/sensors/$sensorId/status" -Headers $h
 $st | ConvertTo-Json -Compress | Write-Host
 Check "status TIMEOUT" ($st.status -eq "TIMEOUT")
-$offline = @(Invoke-RestMethod -Uri "$BaseUrl/api/v1/connectivity/sensors/offline" -Headers $h)
+$offline = (Get-List "/api/v1/connectivity/sensors/offline")
 Check "sensor listed in /sensors/offline" (($offline | Where-Object { $_.sensorId -eq $sensorId -and $_.status -eq "TIMEOUT" }) -ne $null)
 
 Write-Host "`n=== TEST 9: disconnection alert generated in Alert Management ==="
-$alerts = @(Invoke-RestMethod -Uri "$BaseUrl/api/v1/alerts?riskTypeCode=SENSOR_DISCONNECTED&buildingId=$($bld.id)" -Headers $h)
+$alerts = (Get-List "/api/v1/alerts?riskTypeCode=SENSOR_DISCONNECTED&buildingId=$($bld.id)")
 $alerts | Select-Object alertId, @{n="riskDetectionId";e={$_.context.riskDetectionId}}, @{n="severity";e={$_.context.severityCode}} | Format-Table | Out-String | Write-Host
 Check "one SENSOR_DISCONNECTED alert for the building" ($alerts.Count -ge 1 -and $alerts[0].context.zoneId -eq $zoneId)
 
 Write-Host "`n=== TEST 10: a new heartbeat brings the sensor back ONLINE ==="
 $hb3 = Invoke-RestMethod -Uri "$BaseUrl/api/v1/connectivity/heartbeats" -Method Post -Headers $h -ContentType "application/json" -Body (@{ sensorId = $sensorId } | ConvertTo-Json)
 Check "TIMEOUT -> ONLINE (got $($hb3.status)), signal null" ($hb3.status -eq "ONLINE" -and $null -eq $hb3.signalStrength)
-$offline = @(Invoke-RestMethod -Uri "$BaseUrl/api/v1/connectivity/sensors/offline" -Headers $h)
+$offline = (Get-List "/api/v1/connectivity/sensors/offline")
 Check "sensor removed from offline list" (-not ($offline | Where-Object { $_.sensorId -eq $sensorId }))
 
 Write-Host "`n=== TEST 11: no token -> 401 ==="
