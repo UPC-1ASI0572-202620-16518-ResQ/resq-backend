@@ -22,10 +22,12 @@ public sealed class ThingSpeakFeedClient(
             throw new InvalidOperationException("ThingSpeak ReadApiKey is not configured on the server.");
 
         var count = Math.Clamp(settings.FetchCount, 1, 100);
-        var path = $"/channels/{settings.ChannelId}/feeds.json?api_key={Uri.EscapeDataString(settings.ReadApiKey)}&results={count}";
-        // Avoid logging the URI: its query string contains the private read key.
-        using var response = await httpClient.GetAsync(
-            path, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var path = $"/channels/{settings.ChannelId}/feeds.json?results={count}";
+        // ThingSpeak supports THINGSPEAKAPIKEY as a header: never put secrets in the URL or request logs.
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.TryAddWithoutValidation("THINGSPEAKAPIKEY", settings.ReadApiKey);
+        using var response = await httpClient.SendAsync(
+            request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
