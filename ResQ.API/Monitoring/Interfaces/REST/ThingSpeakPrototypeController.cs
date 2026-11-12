@@ -13,7 +13,6 @@ namespace ResQ.API.Monitoring.Interfaces.REST;
 /// </summary>
 [ApiController]
 [Route("api/v1/prototype/telemetry")]
-[AllowAnonymous]
 [Produces("application/json")]
 public sealed class ThingSpeakPrototypeController(
     ThingSpeakFeedClient client,
@@ -22,6 +21,7 @@ public sealed class ThingSpeakPrototypeController(
     ILogger<ThingSpeakPrototypeController> logger) : ControllerBase
 {
     [HttpGet("latest")]
+    [AllowAnonymous]
     [ResponseCache(NoStore = true)]
     public async Task<IActionResult> Latest(CancellationToken cancellationToken)
     {
