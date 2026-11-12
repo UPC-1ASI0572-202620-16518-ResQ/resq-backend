@@ -14,4 +14,14 @@ public sealed class ThingSpeakOptions
     public int RequestTimeoutSeconds { get; set; } = 15;
 
     public int FetchCount { get; set; } = 10;
+
+    public bool Enabled { get; set; } = false;
+
+    public Guid OrganizationId { get; set; } = Guid.Empty;
+
+    public Guid DeviceId { get; set; } = Guid.Empty;
+
+    public int PollIntervalSeconds { get; set; } = 30;
+
+    public bool ImportHistorical { get; set; } = false;
 }
