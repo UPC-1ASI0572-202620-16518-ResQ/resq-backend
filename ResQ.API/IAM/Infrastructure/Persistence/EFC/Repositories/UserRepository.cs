@@ -40,8 +40,15 @@ public class UserRepository(AppDbContext context) : BaseRepository<User>(context
     /// </summary>
     /// <param name="role">The role to filter by.</param>
     /// <returns>A collection of users with the given role.</returns>
-    public async Task<IEnumerable<User>> FindByRoleAsync(Roles role)
+    public async Task<IEnumerable<User>> FindByOrganizationIdAsync(Guid organizationId)
     {
-        return await Context.Set<User>().Where(user => user.Role == role).ToListAsync();
+        return await Context.Set<User>().Where(user => user.OrganizationId == organizationId).ToListAsync();
+    }
+
+    public async Task<IEnumerable<User>> FindByRoleAsync(Guid organizationId, Roles role)
+    {
+        return await Context.Set<User>()
+            .Where(user => user.OrganizationId == organizationId && user.Role == role)
+            .ToListAsync();
     }
 }

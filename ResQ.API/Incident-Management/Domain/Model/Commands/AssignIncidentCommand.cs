@@ -1,3 +1,3 @@
 ﻿namespace ResQ.API.Incident_Management.Domain.Model.Commands;
 
-public record AssignIncidentCommand(Guid IncidentId, Guid AttendantId);
+public record AssignIncidentCommand(Guid OrganizationId, Guid IncidentId, int AttendantId);

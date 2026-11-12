@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ResQ.API.IAM.Domain.Model.ValueObjects;
+using Microsoft.AspNetCore.Mvc;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using ResQ.API.Subscriptions.Domain.Model.Commands;
 using ResQ.API.Subscriptions.Domain.Model.Queries;
@@ -24,6 +25,7 @@ public class SubscriptionsController(
     /// <summary>
     /// Crea una nueva suscripción para la organización autenticada.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPost]
     [SwaggerOperation(Summary = "Crear suscripción",
         Description = @"**Propósito:**
@@ -170,6 +172,7 @@ Respuestas
     /// <summary>
     /// Renueva una suscripción existente.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPut("{id:guid}/renew")]
     [SwaggerOperation(
         Summary = "Renovar suscripción",
@@ -230,6 +233,7 @@ Retorna la suscripción actualizada con código 200 OK.",
     /// <summary>
     /// Cancela una suscripción.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPut("{id:guid}/cancel")]
     [SwaggerOperation(
         Summary = "Cancelar suscripción",
@@ -274,6 +278,7 @@ Retorna la suscripción cancelada con código 200 OK.",
     /// <summary>
     /// Marca una suscripción como expirada.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPut("{id:guid}/expire")]
     [SwaggerOperation(
         Summary = "Expirar suscripción",

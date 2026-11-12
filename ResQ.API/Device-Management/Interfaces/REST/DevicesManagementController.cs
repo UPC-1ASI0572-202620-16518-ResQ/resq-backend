@@ -1,3 +1,4 @@
+﻿using ResQ.API.IAM.Domain.Model.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.Device_Management.Domain.Model.ValueObjects;
 using ResQ.API.Device_Management.Domain.Services;
@@ -16,6 +17,7 @@ public class DevicesManagementController(
     IDeviceCommandService deviceCommandService,
     IDeviceQueryService deviceQueryService) : ControllerBase
 {
+    [Authorize(Roles.Admin)]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Registrar dispositivo",
@@ -196,6 +198,7 @@ Retorna el DeviceResource con estado inicial inactive.",
         return Ok(resource);
     }
 
+    [Authorize(Roles.Admin)]
     [HttpPut("{deviceId:guid}/details")]
     [SwaggerOperation(
         Summary = "Actualizar detalles del dispositivo",
@@ -270,6 +273,7 @@ Retorna el DeviceResource actualizado.",
         }
     }
 
+    [Authorize(Roles.Admin)]
     [HttpPut("{deviceId:guid}/capabilities")]
     [SwaggerOperation(
         Summary = "Reemplazar capacidades del dispositivo",
@@ -358,6 +362,7 @@ Retorna el DeviceResource con las capacidades actualizadas.",
         }
     }
 
+    [Authorize(Roles.Admin)]
     [HttpPut("{deviceId:guid}/assignment")]
     [SwaggerOperation(
         Summary = "Asignar / Reasignar dispositivo a una ubicación",
@@ -433,6 +438,7 @@ Retorna el DeviceResource con la nueva ubicación.",
         }
     }
 
+    [Authorize(Roles.Admin)]
     [HttpPut("{deviceId:guid}/administrative-status")]
     [SwaggerOperation(
         Summary = "Cambiar estado administrativo",

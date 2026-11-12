@@ -6,49 +6,31 @@ using ResQ.API.IAM.Domain.Model.ValueObjects;
 
 namespace ResQ.API.IAM.Application.ACL.Services;
 
-/// <summary>
-///     Facade for the IAM context, providing access to user-related operations.
-/// </summary>
 public class IamContextFacade(IUserCommandService userCommandService, IUserQueryService userQueryService)
     : IIamContextFacade
 {
-    /// <summary>
-    ///     Creates a new user with the specified username, password, and role.
-    /// </summary>
-    /// <param name="username">The username for the new user.</param>
-    /// <param name="password">The password for the new user.</param>
-    /// <param name="role">The role for the new user.</param>
-    /// <returns>The ID of the created user, or 0 if creation failed.</returns>
-    /// <param name="firstName">The user's first name.</param>
-    /// <param name="lastName">The user's last name.</param>
-    /// <param name="email">The user's email.</param>
-    public async Task<int> CreateUser(string firstName, string lastName, string email, string username, string password, Roles role)
+    public async Task<int> CreateUser(Guid organizationId, string firstName, string lastName, string email,
+        string username, string password, Roles role)
     {
-        var signUpCommand = new SignUpCommand(firstName, lastName, email, username, password, role);
-        return await userCommandService.Handle(signUpCommand);
+        var command = new CreateMemberCommand(organizationId, firstName, lastName, email, username, password, role);
+        return await userCommandService.Handle(command);
     }
 
-    /// <summary>
-    ///     Fetches the user ID by username.
-    /// </summary>
-    /// <param name="username">The username to search for.</param>
-    /// <returns>The user ID if found, otherwise 0.</returns>
     public async Task<int> FetchUserIdByUsername(string username)
     {
-        var getUserByUsernameQuery = new GetUserByUsernameQuery(username);
-        var result = await userQueryService.Handle(getUserByUsernameQuery);
+        var result = await userQueryService.Handle(new GetUserByUsernameQuery(username));
         return result?.Id ?? 0;
     }
 
-    /// <summary>
-    ///     Fetches the username by user ID.
-    /// </summary>
-    /// <param name="userId">The user ID to search for.</param>
-    /// <returns>The username if found, otherwise an empty string.</returns>
     public async Task<string> FetchUsernameByUserId(int userId)
     {
-        var getUserByIdQuery = new GetUserByIdQuery(userId);
-        var result = await userQueryService.Handle(getUserByIdQuery);
+        var result = await userQueryService.Handle(new GetUserByIdQuery(userId));
         return result?.Username ?? string.Empty;
+    }
+
+    public async Task<Guid?> FetchOrganizationIdByUserId(int userId)
+    {
+        var result = await userQueryService.Handle(new GetUserByIdQuery(userId));
+        return result?.OrganizationId;
     }
 }

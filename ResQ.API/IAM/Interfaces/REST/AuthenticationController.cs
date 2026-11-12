@@ -73,15 +73,16 @@ public class AuthenticationController(
                       "- <b>Password</b>: El sistema aplicará un algoritmo de hashing fuerte (BCrypt) antes de guardarlo en la base de datos. ¡Nunca se guarda en texto plano!<br>" +
                       "- <b>FirstName y LastName</b>: Deben ser proporcionados para el perfil base.<br>" +
                       "- <b>Email</b>: Debe tener un formato de correo válido (ej. texto antes y después del '@', y un dominio con punto).<br>" +
-                      "- <b>Role</b>: Define el tipo de acceso en el sistema. Los roles permitidos son:<br>" +
-                      "  &nbsp;&nbsp;👉 <code>citizen</code> (Ciudadano que reporta emergencias)<br>" +
-                      "  &nbsp;&nbsp;👉 <code>volunteer</code> (Voluntario que atiende reportes)<br><br>" +
-                      "**Nota:** El rol debe enviarse exactamente como los valores permitidos (ignora mayúsculas/minúsculas).<br><br>" +
+                      "- <b>Password</b>: 8 a 72 caracteres, con al menos una letra y un número.<br>" +
+                      "- <b>OrganizationName</b> (opcional): nombre de la organización que se crea con este registro.<br><br>" +
+                      "**Organización y rol:** el registro público crea una organización nueva y el usuario queda como su " +
+                      "<code>admin</code>. Para agregar ciudadanos o voluntarios a la organización, el admin usa " +
+                      "<code>POST /api/v1/users</code>.<br><br>" +
                       "**Creación Automática:** Al registrarse exitosamente en IAM, se creará automáticamente un **Perfil de Usuario** " +
                       "asociado con el Nombre, Apellido y Correo proporcionados.",
         OperationId = "SignUp")]
     [SwaggerResponse(StatusCodes.Status200OK, "El usuario fue creado y registrado exitosamente en la base de datos.")]
-    [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de registro inválidos (campos vacíos, email o rol inválido).")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de registro inválidos (campos vacíos, email inválido o contraseña débil).")]
     [SwaggerResponse(StatusCodes.Status409Conflict, "El username ya está registrado.")]
     public async Task<IActionResult> SignUp([FromBody] SignUpResource signUpResource)
     {

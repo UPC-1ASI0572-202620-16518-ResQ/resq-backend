@@ -6,6 +6,9 @@ public class Incident
 {
     public IncidentId Id { get; private set; } = null!;
 
+    /// <summary>Organization that owns the incident; every read and write is scoped to it.</summary>
+    public Guid OrganizationId { get; private set; }
+
     public ZoneId ZoneId { get; private set; } = null!;
 
     public ERiskType Type { get; private set; }
@@ -26,13 +29,17 @@ public class Incident
     {
     }
 
-    public static Incident Create(ZoneId zoneId, ERiskType type, ERiskLevel level)
+    public static Incident Create(Guid organizationId, ZoneId zoneId, ERiskType type, ERiskLevel level)
     {
+        if (organizationId == Guid.Empty)
+            throw new ArgumentException("Organization id cannot be empty.", nameof(organizationId));
+
         ArgumentNullException.ThrowIfNull(zoneId);
 
         return new Incident
         {
             Id = IncidentId.New(),
+            OrganizationId = organizationId,
             ZoneId = zoneId,
             Type = type,
             Level = level,

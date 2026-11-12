@@ -2,12 +2,12 @@
 
 public record AttendantId
 {
-    public Guid Value { get; }
+    public int Value { get; }
 
-    public AttendantId(Guid value)
+    public AttendantId(int value)
     {
-        if (value == Guid.Empty)
-            throw new ArgumentException("Attendant id cannot be empty.", nameof(value));
+        if (value <= 0)
+            throw new ArgumentException("Attendant id must be greater than zero.", nameof(value));
 
         Value = value;
     }

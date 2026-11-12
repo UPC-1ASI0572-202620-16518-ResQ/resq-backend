@@ -1,6 +1,4 @@
 namespace ResQ.API.IAM.Domain.Model.Queries;
 
-/// <summary>
-///     Query object used to request all users.
-/// </summary>
-public record GetAllUsersQuery;
+/// <summary>Lists the users of one organization.</summary>
+public record GetAllUsersQuery(Guid OrganizationId);

@@ -1,4 +1,5 @@
 ﻿using ResQ.API.Building_Management.Interfaces.ACL;
+using ResQ.API.IAM.Interfaces.ACL;
 using ResQ.API.Incident_Management.Domain.Model.Aggregates;
 using ResQ.API.Incident_Management.Domain.Model.Commands;
 using ResQ.API.Incident_Management.Domain.Model.ValueObjects;
@@ -11,6 +12,7 @@ namespace ResQ.API.Incident_Management.Application.Internal.CommandServices;
 public class IncidentCommandService(
     IIncidentRepository incidentRepository,
     IBuildingsContextFacade buildingsContextFacade,
+    IIamContextFacade iamContextFacade,
     IUnitOfWork unitOfWork)
     : IIncidentCommandService
 {
@@ -25,7 +27,7 @@ public class IncidentCommandService(
         var riskType = ParseRiskType(command.Type);
         var riskLevel = ParseRiskLevel(command.Level);
 
-        var incident = Incident.Create(zoneId, riskType, riskLevel);
+        var incident = Incident.Create(command.OrganizationId, zoneId, riskType, riskLevel);
 
         await incidentRepository.AddAsync(incident);
         await unitOfWork.CompleteAsync();
@@ -35,9 +37,19 @@ public class IncidentCommandService(
 
     public async Task<Incident?> Handle(AssignIncidentCommand command)
     {
-        var incident = await incidentRepository.FindByIncidentIdAsync(command.IncidentId);
+        var incident = await incidentRepository.FindByIncidentIdAsync(command.OrganizationId, command.IncidentId);
 
-        if (incident == null) throw new KeyNotFoundException("Incident not found.");
+        if (incident == null)
+            throw new KeyNotFoundException("Incident not found.");
+
+        var attendantOrganizationId = await iamContextFacade.FetchOrganizationIdByUserId(command.AttendantId);
+
+        if (attendantOrganizationId is null)
+            throw new KeyNotFoundException("Attendant user not found.");
+
+        if (attendantOrganizationId.Value != command.OrganizationId)
+            throw new InvalidOperationException(
+                "The attendant does not belong to the incident organization.");
 
         var attendantId = new AttendantId(command.AttendantId);
 
@@ -51,7 +63,7 @@ public class IncidentCommandService(
     
     public async Task<Incident?> Handle(ChangeIncidentStatusCommand command)
     {
-        var incident = await incidentRepository.FindByIncidentIdAsync(command.IncidentId.Value);
+        var incident = await incidentRepository.FindByIncidentIdAsync(command.OrganizationId, command.IncidentId.Value);
 
         if (incident == null)
         {
@@ -69,7 +81,7 @@ public class IncidentCommandService(
 
     public async Task<Incident?> Handle(ResolveIncidentCommand command)
     {
-        var incident = await incidentRepository.FindByIncidentIdAsync(command.IncidentId);
+        var incident = await incidentRepository.FindByIncidentIdAsync(command.OrganizationId, command.IncidentId);
 
         if (incident == null)
             throw new KeyNotFoundException("Incident not found.");

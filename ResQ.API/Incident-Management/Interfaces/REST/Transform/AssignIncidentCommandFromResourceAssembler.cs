@@ -5,8 +5,8 @@ namespace ResQ.API.Incident_Management.Interfaces.REST.Transform;
 
 public static class AssignIncidentCommandFromResourceAssembler
 {
-    public static AssignIncidentCommand ToCommandFromResource(Guid incidentId, AssignIncidentResource resource)
+    public static AssignIncidentCommand ToCommandFromResource(Guid organizationId, Guid incidentId, AssignIncidentResource resource)
     {
-        return new AssignIncidentCommand(incidentId, resource.AttendantId);
+        return new AssignIncidentCommand(organizationId, incidentId, resource.AttendantId);
     }
 }

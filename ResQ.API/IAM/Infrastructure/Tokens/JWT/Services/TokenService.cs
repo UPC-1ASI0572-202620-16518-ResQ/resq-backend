@@ -14,6 +14,9 @@ namespace ResQ.API.IAM.Infrastructure.Tokens.JWT.Services;
 /// </summary>
 public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
 {
+    /// <summary>Claim that carries the organization of the user.</summary>
+    public const string OrganizationIdClaim = "organization_id";
+
     private readonly TokenSettings _tokenSettings = tokenSettings.Value;
 
     /// <summary>
@@ -32,7 +35,8 @@ public class TokenService(IOptions<TokenSettings> tokenSettings) : ITokenService
             {
                 new Claim(ClaimTypes.Sid, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim(OrganizationIdClaim, user.OrganizationId.ToString())
             }),
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials =

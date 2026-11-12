@@ -1,3 +1,4 @@
+﻿using ResQ.API.IAM.Domain.Model.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using ResQ.API.Risk_Detection.Domain.Model.Queries;
@@ -21,6 +22,7 @@ public class DetectionRulesController(
     IDetectionRuleCommandService detectionRuleCommandService,
     IDetectionRuleQueryService detectionRuleQueryService) : ControllerBase
 {
+    [Authorize(Roles.Admin)]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Configurar regla de detección",
@@ -100,6 +102,7 @@ Crea una regla de detección. La regla nace `ACTIVE` y participa en la evaluaci�
         return Ok(DetectionRuleResourceFromEntityAssembler.ToResourceFromEntity(rule));
     }
 
+    [Authorize(Roles.Admin)]
     [HttpPatch("{ruleId:guid}/status")]
     [SwaggerOperation(
         Summary = "Activar o desactivar regla de detección",
