@@ -33,6 +33,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<IUserQueryService, UserQueryService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IHashingService, HashingService>();
+        builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         builder.Services.AddScoped<IIamContextFacade, IamContextFacade>();
     }
 }

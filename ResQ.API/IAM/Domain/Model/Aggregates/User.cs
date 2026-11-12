@@ -10,12 +10,12 @@ namespace ResQ.API.IAM.Domain.Model.Aggregates;
 ///     This aggregate encapsulates user identity details and exposes methods to update mutable fields.
 ///     Password hashes are ignored for JSON serialization.
 /// </remarks>
-public class User(string username, string passwordHash, Roles role)
+public class User(string username, string passwordHash, Roles role, Guid organizationId)
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="User" /> class with empty values.
     /// </summary>
-    public User() : this(string.Empty, string.Empty, Roles.Citizen)
+    public User() : this(string.Empty, string.Empty, Roles.Citizen, Guid.Empty)
     {
     }
 
@@ -39,6 +39,11 @@ public class User(string username, string passwordHash, Roles role)
     ///     Gets the role of the user.
     /// </summary>
     public Roles Role { get; } = role;
+    
+    /// <summary>
+    ///     Gets the organization identifier.
+    /// </summary>
+    public Guid OrganizationId { get; private set; } = organizationId;
 
     /// <summary>
     ///     Update the user's username.

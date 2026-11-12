@@ -15,6 +15,7 @@ public class UserCommandService(
     IUserRepository userRepository,
     ITokenService tokenService,
     IHashingService hashingService,
+    IOrganizationRepository organizationRepository,
     IUnitOfWork unitOfWork)
     : IUserCommandService
 {
@@ -58,10 +59,13 @@ public class UserCommandService(
             throw new InvalidOperationException($"Username {username} is already taken");
 
         var hashedPassword = hashingService.HashPassword(command.Password);
+        
+        var organization = Organization.Register($"{username} organization");
 
-        var user = new User(username, hashedPassword, command.Role);
+        var user = new User(username, hashedPassword, command.Role, organization.Id);
         try
         {
+            await organizationRepository.AddAsync(organization);
             await userRepository.AddAsync(user);
             await unitOfWork.CompleteAsync();
             return user.Id;

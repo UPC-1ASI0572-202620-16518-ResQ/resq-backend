@@ -20,10 +20,34 @@ public static class ModelBuilderExtensions
         builder.Entity<User>().Property(u => u.Id).IsRequired().ValueGeneratedOnAdd();
         builder.Entity<User>().Property(u => u.Username).IsRequired();
         builder.Entity<User>().Property(u => u.PasswordHash).IsRequired();
+        builder.Entity<User>().Property(u => u.OrganizationId).HasColumnName("organization_id").IsRequired();
 
         builder.Entity<User>()
             .Property(u => u.Role)
             .IsRequired()
             .HasConversion<string>();
+        
+        builder.Entity<Organization>(entity =>
+        {
+            entity.ToTable("organizations");
+
+            entity.HasKey(o => o.Id);
+
+            entity.Property(o => o.Id)
+                .HasColumnName("Id")
+                .HasColumnType("char(36)")
+                .IsRequired()
+                .ValueGeneratedNever();
+
+            entity.Property(o => o.Name)
+                .HasColumnName("name")
+                .HasMaxLength(120)
+                .IsRequired();
+
+            entity.Property(o => o.CreatedAt)
+                .HasColumnName("created_at")
+                .HasColumnType("datetime(6)")
+                .IsRequired();
+        });
     }
 }
