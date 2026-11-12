@@ -9,6 +9,7 @@ using ResQ.API.Profiles.Application.Internal.OutboundServices;
 using ResQ.API.Risk_Detection.Application.Internal.OutboundServices;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Extensions;
 using ResQ.API.Incident_Management.Application.Internal.OutboundServices;
+using ResQ.API.Monitoring.Application.Internal.OutboundServices;
 using ResQ.API.Shared.Infrastructure.Documentation.OpenApi.Configuration.Extensions;
 using ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using ResQ.API.Shared.Infrastructure.Interfaces.ASP.Configuration.Extensions;
@@ -70,6 +71,9 @@ builder.Services.AddAlertManagementContextServices();
 
 // Connectivity Management Bounded Context Services
 builder.Services.AddConnectivityManagementContextServices();
+
+// Monitoring Bounded Context Services
+builder.Services.AddMonitoringContextServices();
 
 // Mediator Configuration
 builder.AddCortexConfigurationServices();
