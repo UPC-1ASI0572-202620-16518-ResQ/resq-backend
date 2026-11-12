@@ -34,6 +34,7 @@ public sealed class ThingSpeakImportWorker(
         // The first poll establishes a baseline unless historical import was requested.
         // Duplicates on restart are checked against persisted Monitoring measurements.
         var initialized = settings.ImportHistorical;
+        long baselineEntryId = 0;
         var period = TimeSpan.FromSeconds(Math.Clamp(settings.PollIntervalSeconds, 20, 3600));
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -47,6 +48,7 @@ public sealed class ThingSpeakImportWorker(
                 if (!initialized)
                 {
                     initialized = true;
+                    baselineEntryId = rows.Count == 0 ? 0 : rows.Max(entry => entry.EntryId);
                     logger.LogInformation(
                         "ThingSpeak baseline established. Existing {Count} feed entries were not imported.", rows.Count);
                 }
@@ -56,6 +58,7 @@ public sealed class ThingSpeakImportWorker(
                     var monitoring = scope.ServiceProvider.GetRequiredService<IMonitoringCommandService>();
                     foreach (var row in rows)
                     {
+                        if (row.EntryId <= baselineEntryId) continue;
                         foreach (var measurement in ThingSpeakMeasurementMapper.Map(row))
                         {
                             // Avoid duplicates after service restarts. Single-worker deployment expected.
