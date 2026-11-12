@@ -210,6 +210,49 @@ CREATE TABLE IF NOT EXISTS `heartbeat_records` (
     KEY `ix_heartbeat_records_sensor_connection_id` (`sensor_connection_id`),
     CONSTRAINT `fk_heartbeat_records_sensor_connections_sensor_connection_id` FOREIGN KEY (`sensor_connection_id`) REFERENCES `sensor_connections` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "measurements", @"
+CREATE TABLE IF NOT EXISTS `measurements` (
+    `id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `organization_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `device_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `building_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `zone_id` char(36) COLLATE ascii_general_ci NULL,
+    `variable_type` varchar(50) NOT NULL,
+    `value` decimal(18,4) NOT NULL,
+    `unit` varchar(30) NOT NULL,
+    `measured_at` datetime(6) NOT NULL,
+    `recorded_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_measurements_organization_id_device_id_measured_at` (`organization_id`, `device_id`, `measured_at`),
+    KEY `ix_measurements_organization_id_zone_id_measured_at` (`organization_id`, `zone_id`, `measured_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "device_monitoring_states", @"
+CREATE TABLE IF NOT EXISTS `device_monitoring_states` (
+    `id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `organization_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `device_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `zone_id` char(36) COLLATE ascii_general_ci NULL,
+    `availability` varchar(20) NOT NULL,
+    `last_measurement_at` datetime(6) NULL,
+    `updated_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `ix_device_monitoring_states_organization_id_device_id` (`organization_id`, `device_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "zone_monitoring_states", @"
+CREATE TABLE IF NOT EXISTS `zone_monitoring_states` (
+    `id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `organization_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `zone_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `building_id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `last_updated_at` datetime(6) NOT NULL,
+    `active_risk_id` char(36) COLLATE ascii_general_ci NULL,
+    `condition_code` varchar(50) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `ix_zone_monitoring_states_organization_id_zone_id` (`organization_id`, `zone_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     private static void EnsureTableExists(AppDbContext context, string tableName, string createTableSql)
