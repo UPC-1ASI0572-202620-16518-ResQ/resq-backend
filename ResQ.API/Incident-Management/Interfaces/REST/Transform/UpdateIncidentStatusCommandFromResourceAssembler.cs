@@ -6,13 +6,13 @@ namespace ResQ.API.Incident_Management.Interfaces.REST.Transform;
 
 public static class UpdateIncidentStatusCommandFromResourceAssembler
 {
-    public static ChangeIncidentStatusCommand ToCommandFromResource(Guid incidentId, UpdateIncidentStatusResource resource)
+    public static ChangeIncidentStatusCommand ToCommandFromResource(Guid organizationId, Guid incidentId, UpdateIncidentStatusResource resource)
     {
         if (!Enum.TryParse<EIncidentStatus>(resource.Status, true, out var status))
         {
             throw new ArgumentException("Invalid incident status.");
         }
 
-        return new ChangeIncidentStatusCommand(new IncidentId(incidentId), status);
+        return new ChangeIncidentStatusCommand(organizationId, new IncidentId(incidentId), status);
     }
 }

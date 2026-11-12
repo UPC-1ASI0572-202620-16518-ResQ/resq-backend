@@ -1,7 +1,7 @@
 namespace ResQ.API.IAM.Domain.Model.ValueObjects;
 
 /// <summary>
-///     Defines the possible roles for an application user.
+///     Roles available in the platform.
 /// </summary>
 public enum Roles
 {
@@ -13,5 +13,11 @@ public enum Roles
     /// <summary>
     ///     Role for users who provide rescue and emergency response services.
     /// </summary>
-    Volunteer
+    Volunteer,
+
+    /// <summary>
+    ///     Administrator of an organization: manages buildings, devices, rules, subscriptions and members.
+    ///     Assigned to the user who creates the organization at sign-up.
+    /// </summary>
+    Admin
 }

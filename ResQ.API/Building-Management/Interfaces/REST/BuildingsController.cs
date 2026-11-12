@@ -1,3 +1,4 @@
+﻿using ResQ.API.IAM.Domain.Model.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.Building_Management.Domain.Model.ValueObjects;
 using ResQ.API.Building_Management.Domain.Services;
@@ -26,6 +27,7 @@ public class BuildingsController(
     /// <summary>
     /// Registra una nueva edificación activa dentro de la organización autenticada.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Registrar edificación",
@@ -207,6 +209,7 @@ Retorna la información completa de una edificación, incluyendo su dirección, 
     /// <summary>
     /// Actualiza los detalles descriptivos y dirección física de una edificación.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPut("{buildingId:guid}/details")]
     [SwaggerOperation(
         Summary = "Actualizar detalles de edificación",
@@ -285,6 +288,7 @@ Retorna el `BuildingResource` actualizado.",
     /// <summary>
     /// Cambia el estado administrativo (Active / Inactive) de una edificación.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPut("{buildingId:guid}/administrative-status")]
     [SwaggerOperation(
         Summary = "Cambiar estado administrativo de edificación",
@@ -359,6 +363,7 @@ Retorna la edificación con su nuevo estado administrativo.",
     /// <summary>
     /// Agrega una nueva zona activa a una edificación activa.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPost("{buildingId:guid}/zones")]
     [SwaggerOperation(
         Summary = "Agregar zona a edificación",
@@ -540,6 +545,7 @@ Obtiene los detalles de una zona física específica dentro de una edificación.
     /// <summary>
     /// Actualiza los datos descriptivos y piso de una zona.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPut("{buildingId:guid}/zones/{zoneId:guid}/details")]
     [SwaggerOperation(
         Summary = "Actualizar datos de zona",
@@ -602,6 +608,7 @@ Retorna la edificación con la zona actualizada.",
     /// <summary>
     /// Cambia el estado administrativo (Active / Inactive) de una zona específica.
     /// </summary>
+    [Authorize(Roles.Admin)]
     [HttpPut("{buildingId:guid}/zones/{zoneId:guid}/administrative-status")]
     [SwaggerOperation(
         Summary = "Cambiar estado administrativo de zona",

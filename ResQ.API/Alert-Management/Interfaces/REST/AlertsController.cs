@@ -1,3 +1,4 @@
+﻿using ResQ.API.IAM.Domain.Model.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.Alert_Management.Domain.Model.Queries;
 using ResQ.API.Alert_Management.Domain.Services;
@@ -174,6 +175,7 @@ Estados: `EXECUTION_REQUESTED` (automática), `PENDING_AUTHORIZATION` (requiere 
         return Ok(executions.Select(ResponseExecutionResourceFromEntityAssembler.ToResourceFromEntity));
     }
 
+    [Authorize(Roles.Admin, Roles.Volunteer)]
     [HttpPut("{alertId:guid}/response-executions/{responseExecutionId:guid}/authorization")]
     [SwaggerOperation(
         Summary = "Autorizar o rechazar una ejecución de respuesta",

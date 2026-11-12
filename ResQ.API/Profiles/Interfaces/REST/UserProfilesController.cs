@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
+using ResQ.API.IAM.Interfaces.ACL;
 using ResQ.API.Profiles.Domain.Model.Queries;
 using ResQ.API.Profiles.Domain.Services;
 using ResQ.API.Profiles.Interfaces.REST.Resources;
@@ -14,7 +15,8 @@ namespace ResQ.API.Profiles.Interfaces.REST;
 [Authorize] // Requires JWT from IAM
 public class UserProfilesController(
     IUserProfileCommandService userProfileCommandService,
-    IUserProfileQueryService userProfileQueryService)
+    IUserProfileQueryService userProfileQueryService,
+    IIamContextFacade iamContextFacade)
     : ControllerBase
 {
     [HttpGet("me")]
@@ -40,12 +42,17 @@ public class UserProfilesController(
     [HttpGet("{id:int}")]
     [SwaggerOperation(
         Summary = "Obtener un perfil por ID",
-        Description = "Obtiene los detalles del perfil de un usuario.",
+        Description = "Obtiene los detalles del perfil de un usuario de la misma organización. Devuelve 404 si el usuario no existe o es de otra organización.",
         OperationId = "GetUserProfileById")]
     [SwaggerResponse(StatusCodes.Status200OK, "El perfil fue encontrado", typeof(UserProfileResource))]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Perfil no encontrado")]
     public async Task<IActionResult> GetUserProfileById(int id)
     {
+        // Only profiles of users in the same organization are visible
+        if (HttpContext.Items["OrganizationId"] is not Guid organizationId) return Unauthorized();
+        var profileOrganizationId = await iamContextFacade.FetchOrganizationIdByUserId(id);
+        if (profileOrganizationId != organizationId) return NotFound();
+
         var query = new GetUserProfileByIdQuery(id);
         var userProfile = await userProfileQueryService.Handle(query);
         if (userProfile == null) return NotFound();

@@ -11,7 +11,7 @@ public class IncidentQueryService(
 {
     public async Task<Incident?> Handle(GetIncidentByIdQuery query)
     {
-        return await incidentRepository.FindByIncidentIdAsync(query.IncidentId);
+        return await incidentRepository.FindByIncidentIdAsync(query.OrganizationId, query.IncidentId);
     }
 
 
@@ -19,9 +19,9 @@ public class IncidentQueryService(
     {
         if (query.ZoneId.HasValue)
         {
-            return await incidentRepository.FindAllByZoneIdAsync(query.ZoneId.Value);
+            return await incidentRepository.FindAllByZoneIdAsync(query.OrganizationId, query.ZoneId.Value);
         }
 
-        return await incidentRepository.ListAsync();
+        return await incidentRepository.FindAllByOrganizationIdAsync(query.OrganizationId);
     }
 }

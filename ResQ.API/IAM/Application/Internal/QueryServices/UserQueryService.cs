@@ -27,7 +27,7 @@ public class UserQueryService(IUserRepository userRepository) : IUserQueryServic
     /// <returns>A collection of users.</returns>
     public async Task<IEnumerable<User>> Handle(GetAllUsersQuery query)
     {
-        return await userRepository.ListAsync();
+        return await userRepository.FindByOrganizationIdAsync(query.OrganizationId);
     }
 
     /// <summary>
@@ -47,6 +47,6 @@ public class UserQueryService(IUserRepository userRepository) : IUserQueryServic
     /// <returns>A collection of users with the given role.</returns>
     public async Task<IEnumerable<User>> Handle(GetUserByRoleQuery query)
     {
-        return await userRepository.FindByRoleAsync(query.Role);
+        return await userRepository.FindByRoleAsync(query.OrganizationId, query.Role);
     }
 }

@@ -9,17 +9,25 @@ namespace ResQ.API.Incident_Management.Infrastructure.Persistence.EFC.Repositori
 
 public class IncidentRepository(AppDbContext context) : BaseRepository<Incident>(context), IIncidentRepository
 {
-    public async Task<Incident?> FindByIncidentIdAsync(Guid incidentId)
+    public async Task<Incident?> FindByIncidentIdAsync(Guid organizationId, Guid incidentId)
     {
         var id = new IncidentId(incidentId);
-
-        return await Context.Set<Incident>().FindAsync(id);
+        return await Context.Set<Incident>()
+            .FirstOrDefaultAsync(incident => incident.Id == id && incident.OrganizationId == organizationId);
     }
 
-    public async Task<IEnumerable<Incident>> FindAllByZoneIdAsync(Guid zoneId)
+    public async Task<IEnumerable<Incident>> FindAllByOrganizationIdAsync(Guid organizationId)
+    {
+        return await Context.Set<Incident>()
+            .Where(incident => incident.OrganizationId == organizationId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Incident>> FindAllByZoneIdAsync(Guid organizationId, Guid zoneId)
     {
         var id = new ZoneId(zoneId);
-
-        return await Context.Set<Incident>().Where(incident => incident.ZoneId == id).ToListAsync();
+        return await Context.Set<Incident>()
+            .Where(incident => incident.OrganizationId == organizationId && incident.ZoneId == id)
+            .ToListAsync();
     }
 }

@@ -258,6 +258,7 @@ CREATE TABLE IF NOT EXISTS `zone_monitoring_states` (
         EnsureTableExists(context, "incidents", @"
 CREATE TABLE IF NOT EXISTS `incidents` (
     `Id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
     `zone_id` char(36) NOT NULL,
     `type` longtext NOT NULL,
     `level` longtext NOT NULL,
@@ -279,6 +280,92 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
     `end_date` datetime(6) NOT NULL,
     PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // IAM organizations (same DDL that EF Core generates)
+        EnsureTableExists(context, "organizations", @"
+CREATE TABLE IF NOT EXISTS `organizations` (
+    `Id` char(36) NOT NULL,
+    `name` varchar(120) NOT NULL,
+    `created_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Columns added after the tables already existed in local databases
+        EnsureColumnExists(context, "users", "organization_id", "char(36) NULL");
+        EnsureColumnExists(context, "incidents", "organization_id", "char(36) NULL");
+
+        AssignLegacyRowsToOrganization(context);
+    }
+
+    /// <summary>
+    ///     One-time upgrade for databases created before organizations existed: users and incidents
+    ///     without organization are moved to the organization that already owns the legacy data
+    ///     (the former single development organization), and those users become its admins.
+    ///     It does nothing on new databases or once every row has an organization.
+    /// </summary>
+    private static void AssignLegacyRowsToOrganization(AppDbContext context)
+    {
+        const string legacyOrganizationId = "11111111-1111-1111-1111-111111111111";
+        try
+        {
+            var connection = context.Database.GetDbConnection();
+            var wasOpen = connection.State == System.Data.ConnectionState.Open;
+            if (!wasOpen) connection.Open();
+
+            using var check = connection.CreateCommand();
+            check.CommandText = @"SELECT
+    (SELECT COUNT(*) FROM `users` WHERE `organization_id` IS NULL OR `organization_id` = '') +
+    (SELECT COUNT(*) FROM `incidents` WHERE `organization_id` IS NULL OR `organization_id` = '');";
+            var pending = Convert.ToInt64(check.ExecuteScalar());
+
+            if (pending > 0)
+            {
+                using var upgrade = connection.CreateCommand();
+                upgrade.CommandText = $@"
+INSERT IGNORE INTO `organizations` (`Id`, `name`, `created_at`)
+VALUES ('{legacyOrganizationId}', 'Legacy development organization', UTC_TIMESTAMP(6));
+UPDATE `users` SET `organization_id` = '{legacyOrganizationId}', `role` = 'Admin'
+WHERE `organization_id` IS NULL OR `organization_id` = '';
+UPDATE `incidents` SET `organization_id` = '{legacyOrganizationId}'
+WHERE `organization_id` IS NULL OR `organization_id` = '';";
+                upgrade.ExecuteNonQuery();
+                Console.WriteLine($"Assigned {pending} legacy rows to organization {legacyOrganizationId}.");
+            }
+
+            if (!wasOpen) connection.Close();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error assigning legacy rows to an organization: {ex.Message}");
+        }
+    }
+
+    private static void EnsureColumnExists(AppDbContext context, string tableName, string columnName,
+        string columnDefinition)
+    {
+        try
+        {
+            var connection = context.Database.GetDbConnection();
+            var wasOpen = connection.State == System.Data.ConnectionState.Open;
+            if (!wasOpen) connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '{tableName}' AND column_name = '{columnName}';";
+            var exists = Convert.ToInt64(cmd.ExecuteScalar()) > 0;
+
+            if (!exists)
+            {
+                using var alter = connection.CreateCommand();
+                alter.CommandText = $"ALTER TABLE `{tableName}` ADD COLUMN `{columnName}` {columnDefinition};";
+                alter.ExecuteNonQuery();
+            }
+
+            if (!wasOpen) connection.Close();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error ensuring column {tableName}.{columnName}: {ex.Message}");
+        }
     }
 
     private static void EnsureTableExists(AppDbContext context, string tableName, string createTableSql)

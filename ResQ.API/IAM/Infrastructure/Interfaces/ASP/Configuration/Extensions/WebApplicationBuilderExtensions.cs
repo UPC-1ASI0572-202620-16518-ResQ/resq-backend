@@ -29,6 +29,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.Configure<TokenSettings>(builder.Configuration.GetSection("TokenSettings"));
 
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         builder.Services.AddScoped<IUserCommandService, UserCommandService>();
         builder.Services.AddScoped<IUserQueryService, UserQueryService>();
         builder.Services.AddScoped<ITokenService, TokenService>();

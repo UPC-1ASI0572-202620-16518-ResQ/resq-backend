@@ -2,4 +2,4 @@
 
 namespace ResQ.API.Incident_Management.Domain.Model.Commands;
 
-public record ChangeIncidentStatusCommand(IncidentId IncidentId, EIncidentStatus Status);
+public record ChangeIncidentStatusCommand(Guid OrganizationId, IncidentId IncidentId, EIncidentStatus Status);

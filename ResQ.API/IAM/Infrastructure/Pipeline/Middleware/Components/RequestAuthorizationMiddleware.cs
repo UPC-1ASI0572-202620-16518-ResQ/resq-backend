@@ -22,10 +22,9 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
     /// <param name="context">The current <see cref="HttpContext" />.</param>
     /// <param name="userQueryService">Service used to load users by id.</param>
     /// <param name="tokenService">Service used to validate JWT tokens.</param>
-    /// <param name="configuration"> Service used to configure the initial parameters.</param>
     /// <returns>A task that represents the completion of request processing.</returns>
     /// <remarks>Responds with 401 Unauthorized when the token is missing, invalid or belongs to an unknown user.</remarks>
-    public async Task InvokeAsync(HttpContext context, IUserQueryService userQueryService, ITokenService tokenService, IConfiguration configuration)
+    public async Task InvokeAsync(HttpContext context, IUserQueryService userQueryService, ITokenService tokenService)
     {
         Console.WriteLine("Entering InvokeAsync");
 
@@ -83,18 +82,14 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
 
         context.Items["User"] = user;
 
-        // Temporary single-organization context for development
-        var organizationIdValue = configuration["DevelopmentSettings:OrganizationId"];
-
-        if (!Guid.TryParse(organizationIdValue, out var organizationId) || organizationId == Guid.Empty)
+        // Every request is scoped to the organization of the authenticated user
+        if (user.OrganizationId == Guid.Empty)
         {
-            Console.WriteLine("DevelopmentSettings:OrganizationId is missing or is not a valid GUID.");
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new { message = "The organization context is not configured on the server." });
+            await RejectAsync(context, "The user of this token does not belong to an organization.");
             return;
         }
 
-        context.Items["OrganizationId"] = organizationId;
+        context.Items["OrganizationId"] = user.OrganizationId;
 
         Console.WriteLine("Successful authorization. Updating Context...");
 

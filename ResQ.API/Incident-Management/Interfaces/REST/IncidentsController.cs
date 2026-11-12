@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ResQ.API.IAM.Domain.Model.ValueObjects;
+using Microsoft.AspNetCore.Mvc;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using ResQ.API.Incident_Management.Domain.Model.Queries;
 using ResQ.API.Incident_Management.Domain.Services;
@@ -126,7 +127,9 @@ Retorna la información actual del incidente, incluyendo:
     [SwaggerResponse(StatusCodes.Status404NotFound, "Incident not found")]
     public async Task<IActionResult> GetIncidentById(Guid id)
     {
-        var query = new GetIncidentByIdQuery(id);
+        if (HttpContext.Items["OrganizationId"] is not Guid organizationId) return Unauthorized();
+
+        var query = new GetIncidentByIdQuery(organizationId, id);
         var incident = await incidentQueryService.Handle(query);
         
         if (incident == null)
@@ -145,7 +148,9 @@ Retorna la información actual del incidente, incluyendo:
     [SwaggerResponse(StatusCodes.Status200OK, "Incident history")]
     public async Task<IActionResult> GetIncidents([FromQuery] Guid? zoneId)
     {
-        var query = new GetHistoricalIncidentsQuery(zoneId == Guid.Empty ? null : zoneId, null, null, null);
+        if (HttpContext.Items["OrganizationId"] is not Guid organizationId) return Unauthorized();
+
+        var query = new GetHistoricalIncidentsQuery(organizationId, zoneId == Guid.Empty ? null : zoneId, null, null, null);
         var incidents = await incidentQueryService.Handle(query);
 
         return Ok(incidents.Select(IncidentResourceFromEntityAssembler.ToResourceFromEntity));
@@ -154,6 +159,7 @@ Retorna la información actual del incidente, incluyendo:
     /// <summary>
     /// Cambia el estado actual de un incidente.
     /// </summary>
+    [Authorize(Roles.Admin, Roles.Volunteer)]
     [HttpPut("{id:guid}/status")]
     [SwaggerOperation(Summary = "Change incident status", 
         Description = @"Propósito:
@@ -196,9 +202,11 @@ Retorna el incidente con su nuevo estado.",
     [SwaggerResponse(StatusCodes.Status409Conflict, "Status transition not allowed")]
     public async Task<IActionResult> ChangeStatus(Guid id, [FromBody] UpdateIncidentStatusResource resource)
     {
+        if (HttpContext.Items["OrganizationId"] is not Guid organizationId) return Unauthorized();
+
         return await ExecuteAsync(async () =>
         {
-            var command = UpdateIncidentStatusCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            var command = UpdateIncidentStatusCommandFromResourceAssembler.ToCommandFromResource(organizationId, id, resource);
             var incident = await incidentCommandService.Handle(command);
 
             if (incident == null)
@@ -211,6 +219,7 @@ Retorna el incidente con su nuevo estado.",
     /// <summary>
     /// Asigna un responsable a un incidente activo.
     /// </summary>
+    [Authorize(Roles.Admin, Roles.Volunteer)]
     [HttpPut("{id:guid}/assign")]
     [SwaggerOperation(Summary = "Assign attendant", 
         Description = @"**Propósito:**
@@ -251,9 +260,11 @@ Retorna el incidente actualizado con su nuevo estado y responsable asignado.",
     [SwaggerResponse(StatusCodes.Status409Conflict, "The incident is not active")]
     public async Task<IActionResult> AssignIncident(Guid id, [FromBody] AssignIncidentResource resource)
     {
+        if (HttpContext.Items["OrganizationId"] is not Guid organizationId) return Unauthorized();
+
         return await ExecuteAsync(async () =>
         {
-            var command = AssignIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            var command = AssignIncidentCommandFromResourceAssembler.ToCommandFromResource(organizationId, id, resource);
             var incident = await incidentCommandService.Handle(command);
 
             if (incident == null)
@@ -266,6 +277,7 @@ Retorna el incidente actualizado con su nuevo estado y responsable asignado.",
     /// <summary>
     /// Resuelve un incidente registrando las notas de resolución.
     /// </summary>
+    [Authorize(Roles.Admin, Roles.Volunteer)]
     [HttpPut("{id:guid}/resolve")]
     [SwaggerOperation(Summary = "Resolve incident", 
         Description = @"**Propósito:**
@@ -304,9 +316,11 @@ Retorna el incidente actualizado con estado Resolved.",
     [SwaggerResponse(StatusCodes.Status409Conflict, "The incident cannot be resolved in its current status")]
     public async Task<IActionResult> ResolveIncident(Guid id, [FromBody] ResolveIncidentResource resource)
     {
+        if (HttpContext.Items["OrganizationId"] is not Guid organizationId) return Unauthorized();
+
         return await ExecuteAsync(async () =>
         {
-            var command = ResolveIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            var command = ResolveIncidentCommandFromResourceAssembler.ToCommandFromResource(organizationId, id, resource);
             var incident = await incidentCommandService.Handle(command);
 
             if (incident == null)

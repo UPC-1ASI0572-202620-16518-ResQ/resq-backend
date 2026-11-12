@@ -15,6 +15,9 @@ public static class ModelBuilderExtensions
         // IncidentId Value Object
         builder.Entity<Incident>().Property(i => i.Id).HasConversion(incidentId => incidentId.Value, value => new IncidentId(value)).ValueGeneratedNever();
 
+        // Owning organization (multi-tenant scope)
+        builder.Entity<Incident>().Property(i => i.OrganizationId).IsRequired();
+
         // ZoneId is an external reference to Building Management
         builder.Entity<Incident>().Property(i => i.ZoneId).HasConversion(zoneId => zoneId.Value, value => new ZoneId(value)).IsRequired();
 

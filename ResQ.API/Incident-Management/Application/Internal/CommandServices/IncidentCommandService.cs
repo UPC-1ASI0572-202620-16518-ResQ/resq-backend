@@ -25,7 +25,7 @@ public class IncidentCommandService(
         var riskType = ParseRiskType(command.Type);
         var riskLevel = ParseRiskLevel(command.Level);
 
-        var incident = Incident.Create(zoneId, riskType, riskLevel);
+        var incident = Incident.Create(command.OrganizationId, zoneId, riskType, riskLevel);
 
         await incidentRepository.AddAsync(incident);
         await unitOfWork.CompleteAsync();
@@ -35,7 +35,7 @@ public class IncidentCommandService(
 
     public async Task<Incident?> Handle(AssignIncidentCommand command)
     {
-        var incident = await incidentRepository.FindByIncidentIdAsync(command.IncidentId);
+        var incident = await incidentRepository.FindByIncidentIdAsync(command.OrganizationId, command.IncidentId);
 
         if (incident == null) throw new KeyNotFoundException("Incident not found.");
 
@@ -51,7 +51,7 @@ public class IncidentCommandService(
     
     public async Task<Incident?> Handle(ChangeIncidentStatusCommand command)
     {
-        var incident = await incidentRepository.FindByIncidentIdAsync(command.IncidentId.Value);
+        var incident = await incidentRepository.FindByIncidentIdAsync(command.OrganizationId, command.IncidentId.Value);
 
         if (incident == null)
         {
@@ -69,7 +69,7 @@ public class IncidentCommandService(
 
     public async Task<Incident?> Handle(ResolveIncidentCommand command)
     {
-        var incident = await incidentRepository.FindByIncidentIdAsync(command.IncidentId);
+        var incident = await incidentRepository.FindByIncidentIdAsync(command.OrganizationId, command.IncidentId);
 
         if (incident == null)
             throw new KeyNotFoundException("Incident not found.");
