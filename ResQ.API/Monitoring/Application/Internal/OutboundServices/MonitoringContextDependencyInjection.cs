@@ -16,6 +16,9 @@ public static class MonitoringContextDependencyInjection
         // Settings (appsettings section "MonitoringSettings")
         services.AddOptions<MonitoringSettings>().BindConfiguration(MonitoringSettings.SectionName);
 
+        // Cache the latest public prototype sample for 25 s to protect ThingSpeak rate limits.
+        services.AddMemoryCache();
+
         // Read-only ThingSpeak access. No polling or ingestion starts here.
         services.AddOptions<ThingSpeakOptions>().BindConfiguration(ThingSpeakOptions.SectionName);
         services.AddHttpClient<ThingSpeakFeedClient>((serviceProvider, client) =>
