@@ -5,6 +5,7 @@ using ResQ.API.Monitoring.Domain.Services;
 using ResQ.API.Monitoring.Domain.Model.ValueObjects;
 using ResQ.API.Monitoring.Infrastructure.Persistence.EFC.Repositories;
 using ResQ.API.Monitoring.Interfaces.ACL;
+using ResQ.API.Monitoring.Infrastructure.ThingSpeak;
 
 namespace ResQ.API.Monitoring.Application.Internal.OutboundServices;
 
@@ -14,6 +15,15 @@ public static class MonitoringContextDependencyInjection
     {
         // Settings (appsettings section "MonitoringSettings")
         services.AddOptions<MonitoringSettings>().BindConfiguration(MonitoringSettings.SectionName);
+
+        // Read-only ThingSpeak access. No polling or ingestion starts here.
+        services.AddOptions<ThingSpeakOptions>().BindConfiguration(ThingSpeakOptions.SectionName);
+        services.AddHttpClient<ThingSpeakFeedClient>((serviceProvider, client) =>
+        {
+            var settings = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<ThingSpeakOptions>>().Value;
+            client.BaseAddress = new Uri("https://api.thingspeak.com");
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(settings.RequestTimeoutSeconds, 1, 60));
+        });
 
         // Repositories
         services.AddScoped<IMeasurementRepository, MeasurementRepository>();
