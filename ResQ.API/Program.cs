@@ -83,6 +83,9 @@ var app = builder.Build();
 // Verify if the database exists and create it if it doesn't
 app.UseDatabaseCreationAssurance();
 
+// Return { message } with 500 for unhandled exceptions, without exposing the stack trace
+app.UseGlobalExceptionHandling();
+
 // Apply CORS Policy
 app.UseCors("AllowAllPolicy");
 

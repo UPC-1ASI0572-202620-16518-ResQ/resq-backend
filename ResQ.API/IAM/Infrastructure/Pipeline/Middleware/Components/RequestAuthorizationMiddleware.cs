@@ -86,9 +86,12 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
         // Temporary single-organization context for development
         var organizationIdValue = configuration["DevelopmentSettings:OrganizationId"];
 
-        if (!Guid.TryParse(organizationIdValue, out var organizationId))
+        if (!Guid.TryParse(organizationIdValue, out var organizationId) || organizationId == Guid.Empty)
         {
-            throw new Exception("Development organization id is not configured correctly.");
+            Console.WriteLine("DevelopmentSettings:OrganizationId is missing or is not a valid GUID.");
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsJsonAsync(new { message = "The organization context is not configured on the server." });
+            return;
         }
 
         context.Items["OrganizationId"] = organizationId;

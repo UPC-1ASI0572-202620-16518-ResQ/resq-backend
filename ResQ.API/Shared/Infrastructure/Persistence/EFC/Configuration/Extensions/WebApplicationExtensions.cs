@@ -253,6 +253,32 @@ CREATE TABLE IF NOT EXISTS `zone_monitoring_states` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `ix_zone_monitoring_states_organization_id_zone_id` (`organization_id`, `zone_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Same DDL that EF Core generates for Incident Management (keeps the "Id" column name used by the model)
+        EnsureTableExists(context, "incidents", @"
+CREATE TABLE IF NOT EXISTS `incidents` (
+    `Id` char(36) NOT NULL,
+    `zone_id` char(36) NOT NULL,
+    `type` longtext NOT NULL,
+    `level` longtext NOT NULL,
+    `status` longtext NOT NULL,
+    `assigned_to` char(36) NULL,
+    `created_at` datetime NOT NULL,
+    `resolved_at` datetime NULL,
+    `resolution_notes` longtext NULL,
+    PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Same DDL that EF Core generates for Subscriptions
+        EnsureTableExists(context, "subscriptions", @"
+CREATE TABLE IF NOT EXISTS `subscriptions` (
+    `Id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `status` longtext NOT NULL,
+    `start_date` datetime(6) NOT NULL,
+    `end_date` datetime(6) NOT NULL,
+    PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     private static void EnsureTableExists(AppDbContext context, string tableName, string createTableSql)
