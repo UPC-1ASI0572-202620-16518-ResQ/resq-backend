@@ -24,4 +24,7 @@ public sealed class ThingSpeakOptions
     public int PollIntervalSeconds { get; set; } = 30;
 
     public bool ImportHistorical { get; set; } = false;
+
+    // Explicit, independent opt-in for public prototype measurements.
+    public bool PublicDemoEnabled { get; set; } = false;
 }
