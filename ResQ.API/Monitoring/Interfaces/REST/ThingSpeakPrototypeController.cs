@@ -70,7 +70,7 @@ public sealed class ThingSpeakPrototypeController(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            logger.LogWarning(exception.GetType().Name, "ThingSpeak prototype response could not be processed.");
+            logger.LogWarning("ThingSpeak prototype response could not be processed ({ExceptionType}).", exception.GetType().Name);
             return StatusCode(502, new { message = "Telemetry could not be read." });
         }
     }
