@@ -25,6 +25,9 @@ public static class MonitoringContextDependencyInjection
             client.Timeout = TimeSpan.FromSeconds(Math.Clamp(settings.RequestTimeoutSeconds, 1, 60));
         });
 
+        // Worker starts only when ThingSpeak:Enabled is explicitly true and mapped IDs exist.
+        services.AddHostedService<ThingSpeakImportWorker>();
+
         // Repositories
         services.AddScoped<IMeasurementRepository, MeasurementRepository>();
         services.AddScoped<IDeviceMonitoringStateRepository, DeviceMonitoringStateRepository>();
