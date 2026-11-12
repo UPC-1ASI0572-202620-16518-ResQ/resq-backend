@@ -22,9 +22,20 @@ var builder = WebApplication.CreateBuilder(args);
 // Add CORS Policy
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllPolicy",
-        policy => policy.AllowAnyOrigin()
-            .AllowAnyMethod().AllowAnyHeader());
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        var allowedOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .GetChildren()
+            .Select(section => section.Value)
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .ToArray();
+
+        policy
+            .WithOrigins(allowedOrigins!)
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
 });
 // ------------------------------------
 
@@ -40,7 +51,10 @@ builder.Services.AddControllers(options => options.Conventions.Add(new KebabCase
 builder.AddDatabaseServices();
 
 // Open API Configuration (Swagger)
-builder.AddOpenApiDocumentationServices();
+if (builder.Environment.IsDevelopment())
+{
+    builder.AddOpenApiDocumentationServices();
+}
 
 // Shared Context Services
 builder.AddSharedContextServices();
@@ -87,10 +101,13 @@ app.UseDatabaseCreationAssurance();
 app.UseGlobalExceptionHandling();
 
 // Apply CORS Policy
-app.UseCors("AllowAllPolicy");
+app.UseCors("CorsPolicy");
 
 // Configure the HTTP request pipeline.
-app.UseOpenApiDocumentation();
+if (app.Environment.IsDevelopment())
+{
+    app.UseOpenApiDocumentation();
+}
 
 //app.UseHttpsRedirection();
 

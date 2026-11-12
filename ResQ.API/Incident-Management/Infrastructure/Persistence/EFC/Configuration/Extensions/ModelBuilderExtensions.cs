@@ -32,7 +32,7 @@ public static class ModelBuilderExtensions
         // Optional responsible user
         builder.Entity<Incident>().Property(i => i.AssignedTo)
             .HasConversion(
-                attendantId => attendantId == null ? (Guid?)null : attendantId.Value,
+                attendantId => attendantId == null ? (int?)null : attendantId.Value,
                 value => value.HasValue ? new AttendantId(value.Value) : null);
 
         builder.Entity<Incident>().Property(i => i.CreatedAt).IsRequired();

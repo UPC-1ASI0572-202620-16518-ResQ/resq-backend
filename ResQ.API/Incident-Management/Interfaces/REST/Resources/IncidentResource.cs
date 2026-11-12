@@ -6,7 +6,7 @@ public record IncidentResource(
     string Type,
     string Level,
     string Status,
-    Guid? AssignedTo,
+    int? AssignedTo,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ResolvedAt,
     string? ResolutionNotes);
