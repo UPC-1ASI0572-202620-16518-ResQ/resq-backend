@@ -4,6 +4,7 @@ using ResQ.API.Building_Management.Domain.Model.ValueObjects;
 using ResQ.API.Building_Management.Domain.Repositories;
 using ResQ.API.Building_Management.Domain.Services;
 using ResQ.API.Shared.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace ResQ.API.Building_Management.Application.Internal.CommandServices;
 
@@ -28,8 +29,11 @@ public class BuildingCommandService(IBuildingRepository buildingRepository, IUni
             command.Description,
             command.Address);
 
+        foreach (var floor in command.Floors ?? [])
+            building.AddFloor(floor.Label, floor.Level);
+
         await buildingRepository.AddAsync(building);
-        await unitOfWork.CompleteAsync();
+        await CompleteAsync();
 
         return building;
     }
@@ -68,7 +72,7 @@ public class BuildingCommandService(IBuildingRepository buildingRepository, IUni
         building.UpdateDetails(newName, newDescription, newAddress);
 
         buildingRepository.Update(building);
-        await unitOfWork.CompleteAsync();
+        await CompleteAsync();
 
         return building;
     }
@@ -80,7 +84,7 @@ public class BuildingCommandService(IBuildingRepository buildingRepository, IUni
         building.ChangeAdministrativeStatus(command.AdministrativeStatus);
 
         buildingRepository.Update(building);
-        await unitOfWork.CompleteAsync();
+        await CompleteAsync();
 
         return building;
     }
@@ -92,7 +96,7 @@ public class BuildingCommandService(IBuildingRepository buildingRepository, IUni
         building.AddZone(command.ZoneCode, command.Name, command.Description, command.FloorLabel);
 
         buildingRepository.Update(building);
-        await unitOfWork.CompleteAsync();
+        await CompleteAsync();
 
         return building;
     }
@@ -119,7 +123,7 @@ public class BuildingCommandService(IBuildingRepository buildingRepository, IUni
         building.UpdateZone(command.ZoneId, newName, newDescription, newFloorLabel);
 
         buildingRepository.Update(building);
-        await unitOfWork.CompleteAsync();
+        await CompleteAsync();
 
         return building;
     }
@@ -131,8 +135,35 @@ public class BuildingCommandService(IBuildingRepository buildingRepository, IUni
         building.ChangeZoneAdministrativeStatus(command.ZoneId, command.AdministrativeStatus);
 
         buildingRepository.Update(building);
-        await unitOfWork.CompleteAsync();
+        await CompleteAsync();
 
+        return building;
+    }
+
+    public async Task<Building> Handle(AddFloorCommand command)
+    {
+        var building = await FindBuildingOrThrow(command.OrganizationId, command.BuildingId);
+        building.AddFloor(command.Label, command.Level);
+        buildingRepository.Update(building);
+        await CompleteAsync();
+        return building;
+    }
+
+    public async Task<Building> Handle(UpdateFloorCommand command)
+    {
+        var building = await FindBuildingOrThrow(command.OrganizationId, command.BuildingId);
+        building.UpdateFloor(command.FloorId, command.Label, command.Level);
+        buildingRepository.Update(building);
+        await CompleteAsync();
+        return building;
+    }
+
+    public async Task<Building> Handle(RemoveFloorCommand command)
+    {
+        var building = await FindBuildingOrThrow(command.OrganizationId, command.BuildingId);
+        building.RemoveFloor(command.FloorId);
+        buildingRepository.Update(building);
+        await CompleteAsync();
         return building;
     }
 
@@ -142,5 +173,18 @@ public class BuildingCommandService(IBuildingRepository buildingRepository, IUni
         if (building == null)
             throw new KeyNotFoundException("Building not found.");
         return building;
+    }
+
+    private async Task CompleteAsync()
+    {
+        try
+        {
+            await unitOfWork.CompleteAsync();
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new InvalidOperationException(
+                "The building changed while it was being saved. Reload the latest version and retry.", exception);
+        }
     }
 }

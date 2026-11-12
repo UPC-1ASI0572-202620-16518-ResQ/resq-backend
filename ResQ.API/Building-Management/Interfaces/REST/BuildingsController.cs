@@ -5,6 +5,12 @@ using ResQ.API.Building_Management.Interfaces.REST.Resources;
 using ResQ.API.Building_Management.Interfaces.REST.Transform;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.EntityFrameworkCore;
+using ResQ.API.Building_Management.Domain.Model.Aggregates;
+using ResQ.API.Building_Management.Domain.Model.Commands;
+using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration;
+using ResQ.API.IAM.Domain.Model.Aggregates;
+using System.Text.Json.Nodes;
 
 namespace ResQ.API.Building_Management.Interfaces.REST;
 
@@ -17,7 +23,8 @@ namespace ResQ.API.Building_Management.Interfaces.REST;
 [Authorize]
 public class BuildingsController(
     IBuildingCommandService buildingCommandService,
-    IBuildingQueryService buildingQueryService) : ControllerBase
+    IBuildingQueryService buildingQueryService,
+    AppDbContext context) : ControllerBase
 {
     // ══════════════════════════════════════════════════════════════════════════
     // BUILDING ENDPOINTS
@@ -267,6 +274,7 @@ Retorna el `BuildingResource` actualizado.",
         Guid buildingId, [FromBody] UpdateBuildingDetailsResource resource)
     {
         if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
 
         try
         {
@@ -338,6 +346,7 @@ Retorna la edificación con su nuevo estado administrativo.",
         Guid buildingId, [FromBody] ChangeBuildingAdministrativeStatusResource resource)
     {
         if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
 
         try
         {
@@ -350,6 +359,93 @@ Retorna la edificación con su nuevo estado administrativo.",
         }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (InvalidOperationException e) { return HandleInvalidOperation(e); }
+    }
+
+    [HttpGet("{buildingId:guid}/floors")]
+    public async Task<IActionResult> GetFloors(Guid buildingId)
+    {
+        if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        var building = await buildingQueryService.Handle(new Domain.Model.Queries.GetBuildingByIdQuery(organizationId, buildingId));
+        if (building is null) return NotFound();
+        return Ok(building.Floors.Select(floor => new FloorResource(
+            floor.Id, floor.BuildingId, floor.Label, floor.Level, floor.CreatedAt, floor.UpdatedAt)));
+    }
+
+    [HttpPost("{buildingId:guid}/floors")]
+    public async Task<IActionResult> AddFloor(Guid buildingId, [FromBody] SaveFloorResource resource)
+    {
+        if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
+        try
+        {
+            var building = await buildingCommandService.Handle(
+                new AddFloorCommand(organizationId, buildingId, resource.Label, resource.Level));
+            return CreatedAtAction(nameof(GetFloors), new { buildingId },
+                BuildingResourceFromEntityAssembler.ToResourceFromEntity(building));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (ArgumentException e) { return BadRequest(new { message = e.Message }); }
+        catch (InvalidOperationException e) { return Conflict(new { message = e.Message }); }
+    }
+
+    [HttpPut("{buildingId:guid}/floors/{floorId:guid}")]
+    public async Task<IActionResult> UpdateFloor(
+        Guid buildingId, Guid floorId, [FromBody] SaveFloorResource resource)
+    {
+        if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
+        var current = await buildingQueryService.Handle(
+            new Domain.Model.Queries.GetBuildingByIdQuery(organizationId, buildingId));
+        var currentFloor = current?.Floors.FirstOrDefault(candidate => candidate.Id == floorId);
+        if (currentFloor is null) return NotFound();
+        var userId = HttpContext.Items["User"] is User user ? user.Id : 0;
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync();
+            var building = await buildingCommandService.Handle(
+                new UpdateFloorCommand(organizationId, buildingId, floorId, resource.Label, resource.Level));
+            var updatedFloor = building.Floors.Single(candidate => candidate.Id == floorId);
+            if (!string.Equals(currentFloor.Label, updatedFloor.Label, StringComparison.Ordinal))
+            {
+                var layouts = await context.Set<FloorPlanLayout>().Where(plan =>
+                    plan.OrganizationId == organizationId && plan.BuildingId == buildingId &&
+                    plan.FloorLabel == currentFloor.Label).ToListAsync();
+                foreach (var layout in layouts)
+                {
+                    var json = JsonNode.Parse(layout.LayoutJson) as JsonObject;
+                    if (json is not null) json["floorLabel"] = updatedFloor.Label;
+                    layout.Update(updatedFloor.Label, json?.ToJsonString() ?? layout.LayoutJson, userId);
+                }
+                await context.SaveChangesAsync();
+            }
+            await transaction.CommitAsync();
+            return Ok(BuildingResourceFromEntityAssembler.ToResourceFromEntity(building));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (ArgumentException e) { return BadRequest(new { message = e.Message }); }
+        catch (DbUpdateConcurrencyException) { return Conflict(new { message = "The floor plan changed while the floor was being renamed. Reload and retry." }); }
+        catch (InvalidOperationException e) { return Conflict(new { message = e.Message }); }
+    }
+
+    [HttpDelete("{buildingId:guid}/floors/{floorId:guid}")]
+    public async Task<IActionResult> DeleteFloor(Guid buildingId, Guid floorId)
+    {
+        if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
+        var building = await buildingQueryService.Handle(new Domain.Model.Queries.GetBuildingByIdQuery(organizationId, buildingId));
+        if (building is null) return NotFound();
+        var floor = building.Floors.FirstOrDefault(candidate => candidate.Id == floorId);
+        if (floor is null) return NotFound();
+        if (await context.Set<FloorPlanLayout>().AnyAsync(plan =>
+                plan.OrganizationId == organizationId && plan.BuildingId == buildingId && plan.FloorLabel == floor.Label))
+            return Conflict(new { message = "A floor with a saved plan cannot be deleted. Clear or archive its plan first." });
+        try
+        {
+            building = await buildingCommandService.Handle(new RemoveFloorCommand(organizationId, buildingId, floorId));
+            return Ok(BuildingResourceFromEntityAssembler.ToResourceFromEntity(building));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (InvalidOperationException e) { return Conflict(new { message = e.Message }); }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -413,6 +509,7 @@ Retorna la edificación conteniendo la nueva zona en la colección `zones`.",
         Guid buildingId, [FromBody] AddZoneToBuildingResource resource)
     {
         if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
 
         try
         {
@@ -583,6 +680,7 @@ Retorna la edificación con la zona actualizada.",
         Guid buildingId, Guid zoneId, [FromBody] UpdateZoneResource resource)
     {
         if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
 
         try
         {
@@ -656,6 +754,7 @@ Retorna la edificación con el estado de la zona actualizado.",
         [FromBody] ChangeZoneAdministrativeStatusResource resource)
     {
         if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        if (await ValidateIfMatch(organizationId, buildingId) is { } versionError) return versionError;
 
         try
         {
@@ -693,6 +792,29 @@ Retorna la edificación con el estado de la zona actualizado.",
         }
 
         return false;
+    }
+
+    private async Task<IActionResult?> ValidateIfMatch(Guid organizationId, Guid buildingId)
+    {
+        var ifMatch = Request.Headers.IfMatch.ToString().Trim();
+        if (string.IsNullOrWhiteSpace(ifMatch) || ifMatch == "*") return null;
+
+        var building = await buildingQueryService.Handle(
+            new Domain.Model.Queries.GetBuildingByIdQuery(organizationId, buildingId));
+        if (building is null) return NotFound();
+
+        var versionText = ifMatch.StartsWith("W/", StringComparison.OrdinalIgnoreCase)
+            ? ifMatch[2..]
+            : ifMatch;
+        if (!long.TryParse(versionText.Trim().Trim('"'), out var expectedVersion) ||
+            expectedVersion != building.Version)
+            return Conflict(new
+            {
+                message = "The building changed since it was loaded. Reload the latest version and retry.",
+                currentVersion = building.Version
+            });
+
+        return null;
     }
 
     private IActionResult HandleInvalidOperation(InvalidOperationException exception)

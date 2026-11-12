@@ -16,6 +16,8 @@ public static class BuildingResourceFromEntityAssembler
         var zones = entity.Zones
             .Select(z => ZoneResourceFromEntityAssembler.ToResourceFromEntity(z, entity))
             .ToList();
+        var floors = entity.Floors.Select(floor => new FloorResource(
+            floor.Id, floor.BuildingId, floor.Label, floor.Level, floor.CreatedAt, floor.UpdatedAt)).ToList();
 
         return new BuildingResource(
             entity.Id,
@@ -25,6 +27,7 @@ public static class BuildingResourceFromEntityAssembler
             entity.Description,
             address,
             entity.AdministrativeStatus,
+            floors,
             zones,
             entity.CreatedAt,
             entity.UpdatedAt,

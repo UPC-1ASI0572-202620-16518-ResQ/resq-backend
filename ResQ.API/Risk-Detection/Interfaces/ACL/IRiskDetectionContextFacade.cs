@@ -11,7 +11,7 @@ public interface IRiskDetectionContextFacade
     /// </summary>
     /// <returns>Identifiers of the risk detections created or updated (empty when no rule was satisfied).</returns>
     /// <exception cref="ArgumentException">When the measurement is not valid.</exception>
-    Task<IReadOnlyCollection<Guid>> EvaluateMeasurementAsync(
+    Task<RiskEvaluationOutcome> EvaluateMeasurementAsync(
         Guid organizationId,
         Guid measurementId,
         Guid deviceId,
@@ -19,3 +19,8 @@ public interface IRiskDetectionContextFacade
         decimal value,
         DateTimeOffset measuredAt);
 }
+
+public record RiskEvaluationOutcome(
+    IReadOnlyCollection<Guid> RiskDetectionIds,
+    IReadOnlyCollection<Guid> GeneratedAlertIds,
+    IReadOnlyCollection<Guid> GeneratedIncidentIds);

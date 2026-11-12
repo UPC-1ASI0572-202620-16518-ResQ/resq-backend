@@ -1,6 +1,7 @@
 using ResQ.API.Alert_Management.Interfaces.ACL;
 using ResQ.API.Risk_Detection.Domain.Model.Aggregates;
 using ResQ.API.Risk_Detection.Domain.Model.Events;
+using ResQ.API.Incident_Management.Interfaces.ACL;
 
 namespace ResQ.API.Risk_Detection.Application.Internal.OutboundServices;
 
@@ -11,11 +12,13 @@ namespace ResQ.API.Risk_Detection.Application.Internal.OutboundServices;
 /// </summary>
 public class AlertManagementRiskDetectionEventPublisher(
     IAlertsContextFacade alertsContextFacade,
+    IIncidentContextFacade incidentContextFacade,
     ILogger<AlertManagementRiskDetectionEventPublisher> logger) : IRiskDetectionEventPublisher
 {
-    public async Task<IReadOnlyCollection<Guid>> PublishAsync(Guid organizationId, IEnumerable<RiskDetection> detections)
+    public async Task<RiskPublicationResult> PublishAsync(Guid organizationId, IEnumerable<RiskDetection> detections)
     {
         var alertIds = new List<Guid>();
+        var incidentIds = new List<Guid>();
 
         foreach (var detection in detections)
         {
@@ -43,6 +46,19 @@ public class AlertManagementRiskDetectionEventPublisher(
                         []);
 
                     if (alertId != Guid.Empty) alertIds.Add(alertId);
+
+                    if (string.Equals(severity, "CRITICAL", StringComparison.OrdinalIgnoreCase) &&
+                        detection.Location.ZoneId.HasValue)
+                    {
+                        var incidentId = await incidentContextFacade.CreateIncidentForDetection(
+                            organizationId,
+                            detection.Location.ZoneId.Value,
+                            detection.RiskTypeCode,
+                            severity,
+                            detection.Id,
+                            alertId == Guid.Empty ? null : alertId);
+                        if (incidentId != Guid.Empty && !incidentIds.Contains(incidentId)) incidentIds.Add(incidentId);
+                    }
                 }
                 catch (Exception e) when (e is ArgumentException or InvalidOperationException)
                 {
@@ -52,6 +68,6 @@ public class AlertManagementRiskDetectionEventPublisher(
             }
         }
 
-        return alertIds;
+        return new RiskPublicationResult(alertIds, incidentIds);
     }
 }

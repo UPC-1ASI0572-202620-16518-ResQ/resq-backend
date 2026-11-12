@@ -14,7 +14,8 @@ public class DetectionRuleCommandService(
     public async Task<DetectionRule> Handle(ConfigureDetectionRuleCommand command)
     {
         var condition = DetectionCondition.Create(command.VariableType, command.Operator, command.Threshold);
-        var rule = DetectionRule.Configure(command.OrganizationId, command.RiskTypeCode, command.SeverityCode, condition);
+        var rule = DetectionRule.Configure(
+            command.OrganizationId, command.RiskTypeCode, command.SeverityCode, condition, command.ZoneId);
 
         await detectionRuleRepository.AddAsync(rule);
         await unitOfWork.CompleteAsync();

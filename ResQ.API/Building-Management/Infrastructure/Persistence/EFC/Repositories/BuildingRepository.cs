@@ -16,6 +16,7 @@ public class BuildingRepository(AppDbContext context)
     {
         return await Context.Set<Building>()
             .Include(b => b.Zones)
+            .Include(b => b.Floors)
             .FirstOrDefaultAsync(b =>
                 b.Id == buildingId &&
                 b.OrganizationId == organizationId);
@@ -37,6 +38,7 @@ public class BuildingRepository(AppDbContext context)
     {
         var query = Context.Set<Building>()
             .Include(b => b.Zones)
+            .Include(b => b.Floors)
             .Where(b => b.OrganizationId == organizationId);
 
         if (administrativeStatus.HasValue)
@@ -93,6 +95,7 @@ public class BuildingRepository(AppDbContext context)
     {
         var building = await Context.Set<Building>()
             .Include(b => b.Zones)
+            .Include(b => b.Floors)
             .FirstOrDefaultAsync(b =>
                 b.Id == buildingId &&
                 b.OrganizationId == organizationId);
@@ -104,6 +107,7 @@ public class BuildingRepository(AppDbContext context)
     {
         return await Context.Set<Building>()
             .Include(b => b.Zones)
+            .Include(b => b.Floors)
             .FirstOrDefaultAsync(b =>
                 b.OrganizationId == organizationId &&
                 b.Zones.Any(z => z.Id == zoneId));

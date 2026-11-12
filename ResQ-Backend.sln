@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResQ.API", "ResQ.API\ResQ.API.csproj", "{A74BD8FC-E85D-4973-920D-2D2435297F13}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResQ.API.Tests", "ResQ.API.Tests\ResQ.API.Tests.csproj", "{D4B5F1AE-7A0E-4E2D-AE2A-12B9731BB264}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{A74BD8FC-E85D-4973-920D-2D2435297F13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A74BD8FC-E85D-4973-920D-2D2435297F13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A74BD8FC-E85D-4973-920D-2D2435297F13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4B5F1AE-7A0E-4E2D-AE2A-12B9731BB264}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4B5F1AE-7A0E-4E2D-AE2A-12B9731BB264}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4B5F1AE-7A0E-4E2D-AE2A-12B9731BB264}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4B5F1AE-7A0E-4E2D-AE2A-12B9731BB264}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

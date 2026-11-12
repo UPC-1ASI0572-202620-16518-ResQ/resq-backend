@@ -4,4 +4,7 @@ public record RegisterBuildingResource(
     string BuildingCode,
     string Name,
     string? Description,
-    BuildingAddressResource Address);
+    BuildingAddressResource Address,
+    IReadOnlyCollection<FloorDefinitionResource>? Floors = null);
+
+public record FloorDefinitionResource(string Label, int Level);

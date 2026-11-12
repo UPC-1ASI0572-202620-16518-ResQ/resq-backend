@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Data;
+using ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration;
 
 namespace ResQ.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 
@@ -8,7 +11,17 @@ public static class WebApplicationExtensions
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        context.Database.EnsureCreated();
+        try
+        {
+            // Creates a brand-new database only. Every upgrade for an existing database is
+            // applied explicitly below; EnsureCreated does not evolve existing schemas.
+            context.Database.EnsureCreated();
+        }
+        catch (Exception exception)
+        {
+            app.Logger.LogCritical(exception, "Database creation assurance could not connect or initialize the database.");
+            throw;
+        }
 
         EnsureTableExists(context, "buildings", @"
 CREATE TABLE IF NOT EXISTS `buildings` (
@@ -44,6 +57,22 @@ CREATE TABLE IF NOT EXISTS `zones` (
     UNIQUE KEY `ix_zones_building_id_zone_code` (`building_id`, `zone_code`),
     CONSTRAINT `fk_zones_buildings_building_id` FOREIGN KEY (`building_id`) REFERENCES `buildings` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Existing installations can use a different collation for buildings.Id than
+        // databases created from the EF model. A textual MySQL FK must match the
+        // referenced key's character set and collation exactly.
+        var buildingIdColumn = ReadBuildingIdColumn(context);
+        EnsureTableExists(context, "floors", FloorSchemaDefinition.CreateTableSql(
+            buildingIdColumn.CharacterSet!, buildingIdColumn.Collation!));
+
+        EnsureIndexExists(context, "floors", "ix_floors_building_id_label",
+            "CREATE UNIQUE INDEX `ix_floors_building_id_label` ON `floors` (`building_id`, `label`);");
+        EnsureIndexExists(context, "floors", "ix_floors_building_id_level",
+            "CREATE UNIQUE INDEX `ix_floors_building_id_level` ON `floors` (`building_id`, `level`);");
+        EnsureForeignKeyExists(context, "floors", "fk_floors_buildings_building_id",
+            "ALTER TABLE `floors` ADD CONSTRAINT `fk_floors_buildings_building_id` " +
+            "FOREIGN KEY (`building_id`) REFERENCES `buildings` (`id`) ON DELETE CASCADE;");
+        ValidateFloorSchema(context, buildingIdColumn);
 
         EnsureTableExists(context, "devices", @"
 CREATE TABLE IF NOT EXISTS `devices` (
@@ -253,14 +282,389 @@ CREATE TABLE IF NOT EXISTS `zone_monitoring_states` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `ix_zone_monitoring_states_organization_id_zone_id` (`organization_id`, `zone_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureColumnExists(context, "incidents", "organization_id", "char(36) NULL");
+        EnsureColumnExists(context, "incidents", "risk_detection_id", "char(36) NULL");
+        EnsureColumnExists(context, "incidents", "alert_id", "char(36) NULL");
+        EnsureColumnExists(context, "incidents", "assigned_user_id", "int NULL");
+        EnsureColumnExists(context, "incidents", "assigned_at", "datetime(6) NULL");
+        EnsureColumnExists(context, "incidents", "resolved_by_user_id", "int NULL");
+        EnsureColumnExists(context, "incidents", "closed_at", "datetime(6) NULL");
+        EnsureColumnExists(context, "incidents", "closed_by_user_id", "int NULL");
+        EnsureColumnExists(context, "detection_rules", "zone_id", "char(36) NULL");
+
+        var developmentOrganizationId = app.Configuration["DevelopmentSettings:OrganizationId"];
+        if (Guid.TryParse(developmentOrganizationId, out _))
+        {
+            ExecuteNonQuery(context,
+                $"UPDATE `incidents` SET `organization_id` = '{developmentOrganizationId}' " +
+                "WHERE `organization_id` IS NULL OR `organization_id` = '00000000-0000-0000-0000-000000000000';");
+            ExecuteNonQuery(context, "ALTER TABLE `incidents` MODIFY `organization_id` char(36) NOT NULL;");
+        }
+
+        EnsureIndexExists(context, "incidents", "ux_incidents_organization_risk_detection",
+            "CREATE UNIQUE INDEX `ux_incidents_organization_risk_detection` ON `incidents` (`organization_id`, `risk_detection_id`);");
+
+        EnsureTableExists(context, "incident_human_actions", @"
+CREATE TABLE IF NOT EXISTS `incident_human_actions` (
+    `id` char(36) NOT NULL,
+    `incident_id` char(36) NOT NULL,
+    `user_id` int NOT NULL,
+    `action_code` varchar(80) NOT NULL,
+    `notes` varchar(1000) NULL,
+    `performed_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_incident_human_actions_incident_performed` (`incident_id`, `performed_at`),
+    CONSTRAINT `fk_incident_human_actions_incident_id` FOREIGN KEY (`incident_id`) REFERENCES `incidents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "incident_safety_verifications", @"
+CREATE TABLE IF NOT EXISTS `incident_safety_verifications` (
+    `id` char(36) NOT NULL,
+    `incident_id` char(36) NOT NULL,
+    `verified_by_user_id` int NOT NULL,
+    `safe` tinyint(1) NOT NULL,
+    `reason` varchar(1000) NOT NULL,
+    `device_id` char(36) NULL,
+    `measurement_id` char(36) NULL,
+    `measured_value` decimal(18,4) NULL,
+    `measured_at` datetime(6) NULL,
+    `rule_snapshot` varchar(2000) NULL,
+    `verified_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `ix_incident_safety_verifications_incident_verified` (`incident_id`, `verified_at`),
+    CONSTRAINT `fk_incident_safety_verifications_incident_id` FOREIGN KEY (`incident_id`) REFERENCES `incidents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureTableExists(context, "floor_plan_layouts", @"
+CREATE TABLE IF NOT EXISTS `floor_plan_layouts` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `building_id` char(36) NOT NULL,
+    `floor_label` varchar(50) NOT NULL,
+    `layout_json` longtext NOT NULL,
+    `updated_by_user_id` int NOT NULL,
+    `updated_at` datetime(6) NOT NULL,
+    `version` bigint NOT NULL DEFAULT 1,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `ux_floor_plan_layouts_scope` (`organization_id`, `building_id`, `floor_label`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        EnsureColumnExists(context, "floor_plan_layouts", "version", "bigint NOT NULL DEFAULT 1");
+        UpgradeLegacyFloorPlanUpdatedAtPrecision(context);
+        ValidateFloorPlanLayoutSchema(context);
+        ReconcileFloors(context);
+
+        EnsureTableExists(context, "response_policies", @"
+CREATE TABLE IF NOT EXISTS `response_policies` (
+    `id` char(36) NOT NULL,
+    `organization_id` char(36) NOT NULL,
+    `zone_id` char(36) NULL,
+    `risk_type_code` varchar(50) NOT NULL,
+    `severity_code` varchar(20) NOT NULL,
+    `actions_json` longtext NOT NULL,
+    `active` tinyint(1) NOT NULL,
+    `updated_by_user_id` int NOT NULL,
+    `updated_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `ux_response_policies_scope` (`organization_id`, `zone_id`, `risk_type_code`, `severity_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    }
+
+    private static DatabaseColumn ReadBuildingIdColumn(AppDbContext context)
+    {
+        var columns = ReadColumns(context, "buildings");
+        RequireColumn(context, columns, "id", "char", 36, false);
+        var id = columns["id"];
+        if (string.IsNullOrWhiteSpace(id.CharacterSet) || string.IsNullOrWhiteSpace(id.Collation))
+            FailSchemaValidation(context, "`buildings.Id` has no usable character set/collation.");
+        return id;
+    }
+
+    private static void ValidateFloorSchema(AppDbContext context, DatabaseColumn buildingIdColumn)
+    {
+        var columns = ReadColumns(context, "floors");
+        if (columns.Count != 6)
+            FailSchemaValidation(context, $"`floors` must contain exactly 6 columns but contains {columns.Count}.");
+
+        RequireColumn(context, columns, "id", "char", 36, false);
+        RequireColumn(context, columns, "building_id", "char", 36, false, null, buildingIdColumn.Collation);
+        if (!string.Equals(columns["building_id"].CharacterSet, buildingIdColumn.CharacterSet,
+                StringComparison.OrdinalIgnoreCase))
+            FailSchemaValidation(context, "`floors.building_id` character set does not match `buildings.Id`.");
+        RequireColumn(context, columns, "label", "varchar", 50, false);
+        RequireColumn(context, columns, "level", "int", null, false);
+        RequireColumn(context, columns, "created_at", "datetime", null, false, 6);
+        RequireColumn(context, columns, "updated_at", "datetime", null, false, 6);
+    }
+
+    // Existing EF-created databases may have `updated_at datetime` (precision 0),
+    // whereas the current FloorPlanLayout mapping requires datetime(6). Widening
+    // the fractional precision preserves existing timestamp values and is safe to
+    // repeat. Never silently change a different column type, nullability or default.
+    private static void UpgradeLegacyFloorPlanUpdatedAtPrecision(AppDbContext context)
+    {
+        var columns = ReadColumns(context, "floor_plan_layouts");
+        if (!columns.TryGetValue("updated_at", out var column))
+            FailSchemaValidation(context, "Required column `floor_plan_layouts.updated_at` is missing.");
+        if (!string.Equals(column!.DataType, "datetime", StringComparison.OrdinalIgnoreCase) || column.Nullable)
+            FailSchemaValidation(context,
+                "`floor_plan_layouts.updated_at` must be a non-nullable datetime before precision upgrade.");
+
+        // A column default would be lost by MODIFY COLUMN unless preserved explicitly.
+        if (column.DateTimePrecision != 6 && column.DefaultValue is not null)
+            FailSchemaValidation(context,
+                "`floor_plan_layouts.updated_at` has a default; refusing to alter its definition automatically.");
+
+        string? alterSql;
+        try
+        {
+            alterSql = FloorSchemaDefinition.GetLayoutTimestampPrecisionUpgradeSql(column.DateTimePrecision);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            FailSchemaValidation(context, ex.Message);
+            return;
+        }
+
+        if (alterSql is not null)
+            ExecuteNonQuery(context, alterSql);
+    }
+
+    private static void ValidateFloorPlanLayoutSchema(AppDbContext context)
+    {
+        var columns = ReadColumns(context, "floor_plan_layouts");
+        if (columns.Count != 8)
+            FailSchemaValidation(context,
+                $"`floor_plan_layouts` must contain exactly 8 columns but contains {columns.Count}.");
+        RequireColumn(context, columns, "id", "char", 36, false);
+        RequireColumn(context, columns, "organization_id", "char", 36, false);
+        RequireColumn(context, columns, "building_id", "char", 36, false);
+        RequireColumn(context, columns, "floor_label", "varchar", 50, false);
+        RequireColumn(context, columns, "layout_json", "longtext", 4_294_967_295L, false);
+        RequireColumn(context, columns, "updated_by_user_id", "int", null, false);
+        RequireColumn(context, columns, "updated_at", "datetime", null, false, 6);
+        RequireColumn(context, columns, "version", "bigint", null, false);
+        var defaultValue = columns["version"].DefaultValue;
+        if (!string.Equals(defaultValue, "1", StringComparison.OrdinalIgnoreCase))
+            FailSchemaValidation(context,
+                $"`floor_plan_layouts.version` must default to 1 but defaults to `{defaultValue ?? "NULL"}`.");
+    }
+
+    private static Dictionary<string, DatabaseColumn> ReadColumns(AppDbContext context, string tableName)
+    {
+        var result = new Dictionary<string, DatabaseColumn>(StringComparer.OrdinalIgnoreCase);
+        var connection = context.Database.GetDbConnection();
+        var wasOpen = connection.State == ConnectionState.Open;
+        try
+        {
+            if (!wasOpen) connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+SELECT column_name, data_type, character_maximum_length, datetime_precision,
+       is_nullable, collation_name, column_default, character_set_name
+FROM information_schema.columns
+WHERE table_schema = DATABASE() AND table_name = @table_name
+ORDER BY ordinal_position;";
+            AddParameter(command, "@table_name", tableName);
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var name = reader.GetString(0);
+                result[name] = new DatabaseColumn(
+                    reader.GetString(1),
+                    reader.IsDBNull(2) ? null : Convert.ToInt64(reader.GetValue(2)),
+                    reader.IsDBNull(3) ? null : Convert.ToInt32(reader.GetValue(3)),
+                    string.Equals(reader.GetString(4), "YES", StringComparison.OrdinalIgnoreCase),
+                    reader.IsDBNull(5) ? null : reader.GetString(5),
+                    reader.IsDBNull(6) ? null : Convert.ToString(reader.GetValue(6)),
+                    reader.IsDBNull(7) ? null : reader.GetString(7));
+            }
+            return result;
+        }
+        catch (Exception exception)
+        {
+            ThrowSchemaFailure(context, $"inspect columns for `{tableName}`", exception);
+            return result;
+        }
+        finally
+        {
+            if (!wasOpen && connection.State != ConnectionState.Closed) connection.Close();
+        }
+    }
+
+    private static void RequireColumn(
+        AppDbContext context,
+        IReadOnlyDictionary<string, DatabaseColumn> columns,
+        string name,
+        string dataType,
+        long? maximumLength,
+        bool nullable,
+        int? dateTimePrecision = null,
+        string? collation = null)
+    {
+        if (!columns.TryGetValue(name, out var column))
+            FailSchemaValidation(context, $"Required column `{name}` is missing.");
+        if (!string.Equals(column!.DataType, dataType, StringComparison.OrdinalIgnoreCase) ||
+            column.MaximumLength != maximumLength ||
+            column.Nullable != nullable ||
+            column.DateTimePrecision != dateTimePrecision ||
+            (collation is not null && !string.Equals(column.Collation, collation, StringComparison.OrdinalIgnoreCase)))
+            FailSchemaValidation(context,
+                $"Column `{name}` does not match the EF model. Actual: type={column.DataType}, " +
+                $"length={column.MaximumLength?.ToString() ?? "-"}, precision={column.DateTimePrecision?.ToString() ?? "-"}, " +
+                $"nullable={column.Nullable}, collation={column.Collation ?? "-"}.");
+    }
+
+    private static void ReconcileFloors(AppDbContext context)
+    {
+        var existing = new List<ExistingFloorSchemaRow>();
+        var sources = new List<LegacyFloorSchemaSource>();
+        var connection = context.Database.GetDbConnection();
+        var wasOpen = connection.State == ConnectionState.Open;
+        try
+        {
+            if (!wasOpen) connection.Open();
+            using (var existingCommand = connection.CreateCommand())
+            {
+                existingCommand.CommandText = "SELECT `building_id`, `label`, `level` FROM `floors`;";
+                using var reader = existingCommand.ExecuteReader();
+                while (reader.Read())
+                    existing.Add(new ExistingFloorSchemaRow(
+                        Convert.ToString(reader.GetValue(0)) ?? string.Empty,
+                        reader.GetString(1),
+                        reader.GetInt32(2)));
+            }
+
+            using (var sourceCommand = connection.CreateCommand())
+            {
+                sourceCommand.CommandText = @"
+SELECT `building_id`, TRIM(`floor_label`) AS `floor_label`
+FROM `zones`
+WHERE `floor_label` IS NOT NULL AND TRIM(`floor_label`) <> ''
+UNION
+SELECT `building_id`, TRIM(`floor_label`) AS `floor_label`
+FROM `floor_plan_layouts`
+WHERE `floor_label` IS NOT NULL AND TRIM(`floor_label`) <> '';";
+                using var reader = sourceCommand.ExecuteReader();
+                while (reader.Read())
+                    sources.Add(new LegacyFloorSchemaSource(
+                        Convert.ToString(reader.GetValue(0)) ?? string.Empty,
+                        reader.GetString(1)));
+            }
+
+            foreach (var missing in FloorSchemaReconciliation.Plan(existing, sources))
+            {
+                using var insert = connection.CreateCommand();
+                insert.CommandText = @"
+INSERT INTO `floors` (`id`, `building_id`, `label`, `level`, `created_at`, `updated_at`)
+VALUES (@id, @building_id, @label, @level, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));";
+                AddParameter(insert, "@id", Guid.NewGuid().ToString());
+                AddParameter(insert, "@building_id", missing.BuildingId);
+                AddParameter(insert, "@label", missing.Label);
+                AddParameter(insert, "@level", missing.Level, DbType.Int32);
+                insert.ExecuteNonQuery();
+            }
+        }
+        catch (Exception exception)
+        {
+            ThrowSchemaFailure(context, "reconcile persisted floors from legacy zones and floor plans", exception);
+        }
+        finally
+        {
+            if (!wasOpen && connection.State != ConnectionState.Closed) connection.Close();
+        }
+    }
+
+    private static void AddParameter(System.Data.Common.DbCommand command, string name, object value, DbType type = DbType.String)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.DbType = type;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
+    }
+
+    private static void FailSchemaValidation(AppDbContext context, string message) =>
+        ThrowSchemaFailure(context, "validate incremental floor schema", new InvalidOperationException(message));
+
+    private static void EnsureColumnExists(AppDbContext context, string tableName, string columnName, string definition)
+    {
+        EnsureSchemaObject(context,
+            $"SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '{tableName}' AND column_name = '{columnName}';",
+            $"ALTER TABLE `{tableName}` ADD COLUMN `{columnName}` {definition};");
+    }
+
+    private static void EnsureIndexExists(AppDbContext context, string tableName, string indexName, string createSql)
+    {
+        EnsureSchemaObject(context,
+            $"SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '{tableName}' AND index_name = '{indexName}';",
+            createSql);
+    }
+
+    private static void EnsureForeignKeyExists(
+        AppDbContext context, string tableName, string constraintName, string createSql)
+    {
+        EnsureSchemaObject(context,
+            $"SELECT COUNT(*) FROM information_schema.referential_constraints " +
+            $"WHERE constraint_schema = DATABASE() AND table_name = '{tableName}' " +
+            $"AND constraint_name = '{constraintName}';",
+            createSql);
+    }
+
+    private static void EnsureSchemaObject(AppDbContext context, string existsSql, string createSql)
+    {
+        var connection = context.Database.GetDbConnection();
+        var wasOpen = connection.State == ConnectionState.Open;
+        try
+        {
+            if (!wasOpen) connection.Open();
+            using var exists = connection.CreateCommand();
+            exists.CommandText = existsSql;
+            if (Convert.ToInt64(exists.ExecuteScalar()) == 0)
+            {
+                using var create = connection.CreateCommand();
+                create.CommandText = createSql;
+                create.ExecuteNonQuery();
+            }
+        }
+        catch (Exception ex)
+        {
+            ThrowSchemaFailure(context, createSql, ex);
+        }
+        finally
+        {
+            if (!wasOpen && connection.State != ConnectionState.Closed) connection.Close();
+        }
+    }
+
+    private static void ExecuteNonQuery(AppDbContext context, string sql)
+    {
+        var connection = context.Database.GetDbConnection();
+        var wasOpen = connection.State == ConnectionState.Open;
+        try
+        {
+            if (!wasOpen) connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            ThrowSchemaFailure(context, sql, ex);
+        }
+        finally
+        {
+            if (!wasOpen && connection.State != ConnectionState.Closed) connection.Close();
+        }
     }
 
     private static void EnsureTableExists(AppDbContext context, string tableName, string createTableSql)
     {
+        var connection = context.Database.GetDbConnection();
+        var wasOpen = connection.State == ConnectionState.Open;
         try
         {
-            var connection = context.Database.GetDbConnection();
-            var wasOpen = connection.State == System.Data.ConnectionState.Open;
             if (!wasOpen) connection.Open();
 
             using var cmd = connection.CreateCommand();
@@ -274,11 +678,32 @@ CREATE TABLE IF NOT EXISTS `zone_monitoring_states` (
                 createCmd.ExecuteNonQuery();
             }
 
-            if (!wasOpen) connection.Close();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error ensuring table {tableName}: {ex.Message}");
+            ThrowSchemaFailure(context, $"create or verify table `{tableName}`", ex);
+        }
+        finally
+        {
+            if (!wasOpen && connection.State != ConnectionState.Closed) connection.Close();
         }
     }
+
+    private static void ThrowSchemaFailure(AppDbContext context, string operation, Exception exception)
+    {
+        var logger = context.GetService<ILoggerFactory>().CreateLogger("DatabaseSchemaAssurance");
+        logger.LogCritical(exception, "Critical database schema operation failed: {Operation}", operation);
+        throw new InvalidOperationException(
+            $"Critical database schema operation failed: {operation}. Startup was stopped to prevent runtime data errors.",
+            exception);
+    }
+
+    private sealed record DatabaseColumn(
+        string DataType,
+        long? MaximumLength,
+        int? DateTimePrecision,
+        bool Nullable,
+        string? Collation,
+        string? DefaultValue,
+        string? CharacterSet);
 }

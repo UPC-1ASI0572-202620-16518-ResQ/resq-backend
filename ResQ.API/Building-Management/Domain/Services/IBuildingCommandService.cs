@@ -11,4 +11,7 @@ public interface IBuildingCommandService
     Task<Building> Handle(AddZoneToBuildingCommand command);
     Task<Building> Handle(UpdateZoneCommand command);
     Task<Building> Handle(ChangeZoneAdministrativeStatusCommand command);
+    Task<Building> Handle(AddFloorCommand command);
+    Task<Building> Handle(UpdateFloorCommand command);
+    Task<Building> Handle(RemoveFloorCommand command);
 }

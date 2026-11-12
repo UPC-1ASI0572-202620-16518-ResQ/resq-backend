@@ -59,6 +59,16 @@ public static class ModelBuilderExtensions
         builder.Entity<ResponseExecution>().Property(e => e.RequestedAt).HasPrecision(6).IsRequired();
         builder.Entity<ResponseExecution>().HasIndex(e => new { e.OrganizationId, e.AlertId });
 
+        builder.Entity<ResponsePolicy>().ToTable("ResponsePolicies");
+        builder.Entity<ResponsePolicy>().HasKey(policy => policy.Id);
+        builder.Entity<ResponsePolicy>().Property(policy => policy.RiskTypeCode).HasMaxLength(50).IsRequired();
+        builder.Entity<ResponsePolicy>().Property(policy => policy.SeverityCode).HasMaxLength(20).IsRequired();
+        builder.Entity<ResponsePolicy>().Property(policy => policy.ActionsJson).HasColumnType("longtext").IsRequired();
+        builder.Entity<ResponsePolicy>().HasIndex(policy => new
+            { policy.OrganizationId, policy.ZoneId, policy.RiskTypeCode, policy.SeverityCode })
+            .IsUnique()
+            .HasDatabaseName("ix_response_policy_scope");
+
         // Embedded Pattern for ResponseActionSnapshot
         builder.Entity<ResponseExecution>().OwnsOne(e => e.Action, action =>
         {

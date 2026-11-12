@@ -17,6 +17,8 @@ public static class ModelBuilderExtensions
 
         // ZoneId is an external reference to Building Management
         builder.Entity<Incident>().Property(i => i.ZoneId).HasConversion(zoneId => zoneId.Value, value => new ZoneId(value)).IsRequired();
+        builder.Entity<Incident>().Property(i => i.OrganizationId).IsRequired();
+        builder.Entity<Incident>().HasIndex(i => new { i.OrganizationId, i.RiskDetectionId }).IsUnique();
 
         // Risk information
         builder.Entity<Incident>().Property(i => i.Type).HasConversion<string>().IsRequired();
@@ -37,6 +39,30 @@ public static class ModelBuilderExtensions
         builder.Entity<Incident>().Property(i => i.ResolvedAt);
 
         builder.Entity<Incident>().Property(i => i.ResolutionNotes);
+
+        builder.Entity<Incident>().HasMany(i => i.HumanActions)
+            .WithOne().HasForeignKey(action => action.IncidentId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<IncidentHumanAction>().ToTable("IncidentHumanActions");
+        builder.Entity<IncidentHumanAction>().HasKey(action => action.Id);
+        builder.Entity<IncidentHumanAction>()
+            .Property(action => action.IncidentId)
+            .HasConversion(id => id.Value, value => new IncidentId(value))
+            .IsRequired();
+        builder.Entity<IncidentHumanAction>().Property(action => action.ActionCode).HasMaxLength(80).IsRequired();
+        builder.Entity<IncidentHumanAction>().Property(action => action.Notes).HasMaxLength(1000);
+        builder.Entity<IncidentHumanAction>().HasIndex(action => new { action.IncidentId, action.PerformedAt });
+
+        builder.Entity<Incident>().HasMany(i => i.SafetyVerifications)
+            .WithOne().HasForeignKey(verification => verification.IncidentId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<IncidentSafetyVerification>().ToTable("IncidentSafetyVerifications");
+        builder.Entity<IncidentSafetyVerification>().HasKey(verification => verification.Id);
+        builder.Entity<IncidentSafetyVerification>()
+            .Property(verification => verification.IncidentId)
+            .HasConversion(id => id.Value, value => new IncidentId(value))
+            .IsRequired();
+        builder.Entity<IncidentSafetyVerification>().Property(verification => verification.Reason).HasMaxLength(1000).IsRequired();
+        builder.Entity<IncidentSafetyVerification>().Property(verification => verification.RuleSnapshot).HasMaxLength(2000);
+        builder.Entity<IncidentSafetyVerification>().HasIndex(verification => new { verification.IncidentId, verification.VerifiedAt });
 
         return builder;
     }

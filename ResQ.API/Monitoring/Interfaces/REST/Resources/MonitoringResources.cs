@@ -30,7 +30,9 @@ public record MeasurementIngestionResource(
     MeasurementValueResource MeasurementValue,
     DateTimeOffset MeasuredAt,
     DateTimeOffset RecordedAt,
-    IEnumerable<Guid> RiskDetectionIds);
+    IEnumerable<Guid> RiskDetectionIds,
+    IEnumerable<Guid> GeneratedAlertIds,
+    IEnumerable<Guid> GeneratedIncidentIds);
 
 public record DeviceMonitoringStateResource(
     Guid DeviceId,

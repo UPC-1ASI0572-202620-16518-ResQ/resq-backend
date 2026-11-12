@@ -64,6 +64,12 @@ public class Zone
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    internal void UpdateFloorLabel(string floorLabel)
+    {
+        FloorLabel = floorLabel;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     private static void ValidateDetails(string name, string? description, string? floorLabel)
     {
         if (string.IsNullOrWhiteSpace(name))

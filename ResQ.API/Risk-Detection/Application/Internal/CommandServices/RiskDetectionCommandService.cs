@@ -27,13 +27,14 @@ public class RiskDetectionCommandService(
         var probe = DetectionEvidence.Create(
             command.MeasurementId, command.DeviceId, command.VariableType, command.Value, command.MeasuredAt);
 
-        var rules = (await detectionRuleRepository.FindActiveByVariableTypeAsync(command.OrganizationId, probe.VariableType)).ToList();
+        var location = await riskLocationResolver.ResolveAsync(command.OrganizationId, command.DeviceId);
+        var rules = (await detectionRuleRepository.FindActiveByVariableTypeAsync(
+            command.OrganizationId, probe.VariableType, location.ZoneId)).ToList();
         var satisfiedRules = RiskEvaluationService.SelectSatisfiedRules(rules, probe);
 
         if (satisfiedRules.Count == 0)
-            return new MeasurementEvaluationResult(command.MeasurementId, rules.Count, [], []);
+            return new MeasurementEvaluationResult(command.MeasurementId, rules.Count, [], [], []);
 
-        var location = await riskLocationResolver.ResolveAsync(command.OrganizationId, command.DeviceId);
         var now = DateTimeOffset.UtcNow;
         var detections = new List<RiskDetection>();
 
@@ -63,10 +64,11 @@ public class RiskDetectionCommandService(
         await unitOfWork.CompleteAsync();
 
         // The detection result continues through the distributed flow (Alert & Response)
-        var alertIds = settings.Value.RaiseAlerts
+        var publication = settings.Value.RaiseAlerts
             ? await riskDetectionEventPublisher.PublishAsync(command.OrganizationId, detections)
-            : [];
+            : new RiskPublicationResult([], []);
 
-        return new MeasurementEvaluationResult(command.MeasurementId, rules.Count, detections, alertIds);
+        return new MeasurementEvaluationResult(
+            command.MeasurementId, rules.Count, detections, publication.AlertIds, publication.IncidentIds);
     }
 }

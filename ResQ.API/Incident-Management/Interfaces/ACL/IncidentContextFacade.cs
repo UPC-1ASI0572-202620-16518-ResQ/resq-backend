@@ -13,4 +13,12 @@ public class IncidentContextFacade(IIncidentCommandService incidentCommandServic
 
         return incident?.Id.Value ?? Guid.Empty;
     }
+
+    public async Task<Guid> CreateIncidentForDetection(
+        Guid organizationId, Guid zoneId, string type, string level, Guid riskDetectionId, Guid? alertId)
+    {
+        var incident = await incidentCommandService.Handle(new CreateIncidentCommand(
+            organizationId, zoneId, type, level, riskDetectionId, alertId));
+        return incident?.Id.Value ?? Guid.Empty;
+    }
 }

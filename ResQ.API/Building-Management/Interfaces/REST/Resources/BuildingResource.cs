@@ -10,7 +10,13 @@ public record BuildingResource(
     string? Description,
     BuildingAddressResource Address,
     LocationAdministrativeStatus AdministrativeStatus,
+    List<FloorResource> Floors,
     List<ZoneResource> Zones,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     long Version);
+
+public record FloorResource(
+    Guid Id, Guid BuildingId, string Label, int Level, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+
+public record SaveFloorResource(string Label, int Level);

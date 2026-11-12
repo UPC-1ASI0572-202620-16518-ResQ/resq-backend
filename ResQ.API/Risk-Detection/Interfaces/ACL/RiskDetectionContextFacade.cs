@@ -8,7 +8,7 @@ namespace ResQ.API.Risk_Detection.Interfaces.ACL;
 /// </summary>
 public class RiskDetectionContextFacade(IRiskDetectionCommandService riskDetectionCommandService) : IRiskDetectionContextFacade
 {
-    public async Task<IReadOnlyCollection<Guid>> EvaluateMeasurementAsync(
+    public async Task<RiskEvaluationOutcome> EvaluateMeasurementAsync(
         Guid organizationId,
         Guid measurementId,
         Guid deviceId,
@@ -19,6 +19,9 @@ public class RiskDetectionContextFacade(IRiskDetectionCommandService riskDetecti
         var command = new EvaluateMeasurementCommand(organizationId, measurementId, deviceId, variableType, value, measuredAt);
         var result = await riskDetectionCommandService.Handle(command);
 
-        return result.RiskDetections.Select(detection => detection.Id).ToList();
+        return new RiskEvaluationOutcome(
+            result.RiskDetections.Select(detection => detection.Id).ToList(),
+            result.GeneratedAlertIds,
+            result.GeneratedIncidentIds);
     }
 }

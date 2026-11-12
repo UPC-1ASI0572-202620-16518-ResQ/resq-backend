@@ -128,4 +128,16 @@ public class MonitoringQueryService(
             .ThenBy(measurement => measurement.VariableType)
             .ToList();
     }
+
+    public async Task<IEnumerable<Measurement>> Handle(GetDeviceMeasurementHistoryQuery query)
+    {
+        return await measurementRepository.FindHistoryByDeviceIdAsync(
+            query.OrganizationId, query.DeviceId, query.From, query.To, query.Limit);
+    }
+
+    public async Task<IEnumerable<Measurement>> Handle(GetZoneMeasurementHistoryQuery query)
+    {
+        return await measurementRepository.FindHistoryByZoneIdAsync(
+            query.OrganizationId, query.ZoneId, query.From, query.To, query.Limit);
+    }
 }

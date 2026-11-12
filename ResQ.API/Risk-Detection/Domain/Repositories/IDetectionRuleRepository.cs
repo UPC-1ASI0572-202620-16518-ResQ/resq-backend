@@ -8,7 +8,9 @@ public interface IDetectionRuleRepository : IBaseRepository<DetectionRule>
 {
     Task<DetectionRule?> FindByIdAsync(Guid organizationId, Guid ruleId);
 
-    Task<IEnumerable<DetectionRule>> FindActiveByVariableTypeAsync(Guid organizationId, string variableType);
+    Task<IEnumerable<DetectionRule>> FindActiveByVariableTypeAsync(Guid organizationId, string variableType, Guid? zoneId);
+
+    Task<IEnumerable<DetectionRule>> FindByZoneAsync(Guid organizationId, Guid zoneId);
 
     Task<IEnumerable<DetectionRule>> FindAllAsync(Guid organizationId, EDetectionRuleStatus? status, string? variableType);
 }

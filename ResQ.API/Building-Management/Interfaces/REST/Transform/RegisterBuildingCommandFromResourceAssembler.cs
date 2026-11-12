@@ -20,6 +20,7 @@ public static class RegisterBuildingCommandFromResourceAssembler
             resource.BuildingCode,
             resource.Name,
             resource.Description,
-            address);
+            address,
+            resource.Floors?.Select(floor => new FloorDefinition(floor.Label, floor.Level)).ToList());
     }
 }

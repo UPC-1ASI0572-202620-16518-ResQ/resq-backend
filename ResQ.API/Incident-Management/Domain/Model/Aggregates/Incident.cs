@@ -8,6 +8,12 @@ public class Incident
 
     public ZoneId ZoneId { get; private set; } = null!;
 
+    public Guid OrganizationId { get; private set; }
+
+    public Guid? RiskDetectionId { get; private set; }
+
+    public Guid? AlertId { get; private set; }
+
     public ERiskType Type { get; private set; }
 
     public ERiskLevel Level { get; private set; }
@@ -16,30 +22,67 @@ public class Incident
 
     public AttendantId? AssignedTo { get; private set; }
 
+    public int? AssignedUserId { get; private set; }
+
+    public DateTimeOffset? AssignedAt { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset? ResolvedAt { get; private set; }
 
+    public int? ResolvedByUserId { get; private set; }
+
+    public DateTimeOffset? ClosedAt { get; private set; }
+
+    public int? ClosedByUserId { get; private set; }
+
     public string? ResolutionNotes { get; private set; }
+
+    private readonly List<IncidentHumanAction> _humanActions = [];
+    public IReadOnlyCollection<IncidentHumanAction> HumanActions => _humanActions.AsReadOnly();
+
+    private readonly List<IncidentSafetyVerification> _safetyVerifications = [];
+    public IReadOnlyCollection<IncidentSafetyVerification> SafetyVerifications => _safetyVerifications.AsReadOnly();
+
+    public bool IsSafetyVerified => _safetyVerifications
+        .OrderByDescending(verification => verification.VerifiedAt)
+        .FirstOrDefault()?.Safe == true;
 
     protected Incident()
     {
     }
 
-    public static Incident Create(ZoneId zoneId, ERiskType type, ERiskLevel level)
+    public static Incident Create(
+        Guid organizationId,
+        ZoneId zoneId,
+        ERiskType type,
+        ERiskLevel level,
+        Guid? riskDetectionId = null,
+        Guid? alertId = null)
     {
+        if (organizationId == Guid.Empty)
+            throw new ArgumentException("Organization id is required.", nameof(organizationId));
+
         ArgumentNullException.ThrowIfNull(zoneId);
 
         return new Incident
         {
             Id = IncidentId.New(),
+            OrganizationId = organizationId,
             ZoneId = zoneId,
+            RiskDetectionId = riskDetectionId,
+            AlertId = alertId,
             Type = type,
             Level = level,
             Status = EIncidentStatus.Active,
             AssignedTo = null,
+            AssignedUserId = null,
+            AssignedAt = null,
             CreatedAt = DateTimeOffset.UtcNow,
             ResolvedAt = null,
+            ResolvedByUserId = null,
+            ClosedAt = null,
+            ClosedByUserId = null,
             ResolutionNotes = null
         };
     }
@@ -55,7 +98,20 @@ public class Incident
         Status = EIncidentStatus.InProgress;
     }
 
-    public void ResolveIncident(string notes)
+    public void AssignCurrentUser(int userId)
+    {
+        if (userId <= 0) throw new ArgumentException("User id is required.", nameof(userId));
+        if (Status != EIncidentStatus.Active && Status != EIncidentStatus.InProgress)
+            throw new InvalidOperationException("Only an active incident can be assumed.");
+        if (AssignedUserId.HasValue && AssignedUserId.Value != userId)
+            throw new InvalidOperationException("The incident is already assigned to another user.");
+
+        AssignedUserId = userId;
+        AssignedAt ??= DateTimeOffset.UtcNow;
+        Status = EIncidentStatus.InProgress;
+    }
+
+    public void ResolveIncident(string notes, int? resolvedByUserId = null)
     {
         if (Status != EIncidentStatus.Active && Status != EIncidentStatus.InProgress)
         {
@@ -65,12 +121,50 @@ public class Incident
         if (string.IsNullOrWhiteSpace(notes))
             throw new ArgumentException("Resolution notes are required.", nameof(notes));
 
+        if (Level == ERiskLevel.Critical && AssignedUserId is null)
+            throw new InvalidOperationException("A critical incident must be assigned before it can be resolved.");
+
+        if (Level == ERiskLevel.Critical && !IsSafetyVerified)
+            throw new InvalidOperationException("A critical incident requires a successful server safety verification before resolution.");
+
         ResolutionNotes = notes.Trim();
         ResolvedAt = DateTimeOffset.UtcNow;
+        ResolvedByUserId = resolvedByUserId;
         Status = EIncidentStatus.Resolved;
     }
+
+    public IncidentHumanAction AddHumanAction(int userId, string actionCode, string? notes)
+    {
+        EnsureNotClosed();
+        if (AssignedUserId != userId)
+            throw new InvalidOperationException("Only the assigned user can record actions on this incident.");
+
+        var action = IncidentHumanAction.Create(Id.Value, userId, actionCode, notes);
+        _humanActions.Add(action);
+        return action;
+    }
+
+    public IncidentSafetyVerification RecordSafetyVerification(
+        int userId,
+        bool safe,
+        string reason,
+        Guid? deviceId,
+        Guid? measurementId,
+        decimal? measuredValue,
+        DateTimeOffset? measuredAt,
+        string? ruleSnapshot)
+    {
+        EnsureNotClosed();
+        if (AssignedUserId != userId)
+            throw new InvalidOperationException("Only the assigned user can verify the incident.");
+
+        var verification = IncidentSafetyVerification.Create(
+            Id.Value, userId, safe, reason, deviceId, measurementId, measuredValue, measuredAt, ruleSnapshot);
+        _safetyVerifications.Add(verification);
+        return verification;
+    }
     
-    public void ChangeStatus(EIncidentStatus newStatus)
+    public void ChangeStatus(EIncidentStatus newStatus, int? changedByUserId = null)
     {
         if (Status == newStatus)
             return;
@@ -88,10 +182,11 @@ public class Incident
         }
 
         Status = newStatus;
-        
-        if (newStatus == EIncidentStatus.Resolved)
+
+        if (newStatus == EIncidentStatus.Closed)
         {
-            ResolvedAt = DateTimeOffset.UtcNow;
+            ClosedAt = DateTimeOffset.UtcNow;
+            ClosedByUserId = changedByUserId;
         }
     }
 

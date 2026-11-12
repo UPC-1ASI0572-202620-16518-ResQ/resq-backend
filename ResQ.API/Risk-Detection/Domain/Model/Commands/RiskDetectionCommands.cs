@@ -11,7 +11,8 @@ public record ConfigureDetectionRuleCommand(
     string SeverityCode,
     string VariableType,
     EComparisonOperator Operator,
-    decimal Threshold);
+    decimal Threshold,
+    Guid? ZoneId = null);
 
 /// <summary>
 /// Activates or deactivates an existing detection rule.

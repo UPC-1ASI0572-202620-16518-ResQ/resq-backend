@@ -6,6 +6,7 @@ namespace ResQ.API.Risk_Detection.Interfaces.REST.Resources;
 /// </summary>
 public record DetectionRuleResource(
     Guid RuleId,
+    Guid? ZoneId,
     string RiskTypeCode,
     string SeverityCode,
     DetectionConditionResource Condition,

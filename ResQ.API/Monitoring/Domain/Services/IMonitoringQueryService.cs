@@ -17,6 +17,10 @@ public interface IMonitoringQueryService
     Task<IEnumerable<Measurement>> Handle(GetCurrentDeviceMeasurementsQuery query);
 
     Task<IEnumerable<Measurement>> Handle(GetCurrentZoneMeasurementsQuery query);
+
+    Task<IEnumerable<Measurement>> Handle(GetDeviceMeasurementHistoryQuery query);
+
+    Task<IEnumerable<Measurement>> Handle(GetZoneMeasurementHistoryQuery query);
 }
 
 /// <summary>

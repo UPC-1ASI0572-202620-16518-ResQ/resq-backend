@@ -77,7 +77,9 @@ La medición debe corresponder a una capacidad de tipo `measurement` del disposi
                     measurement.MeasurementValue,
                     measurement.MeasuredAt,
                     measurement.RecordedAt,
-                    result.RiskDetectionIds));
+                    result.Evaluation.RiskDetectionIds,
+                    result.Evaluation.GeneratedAlertIds,
+                    result.Evaluation.GeneratedIncidentIds));
         });
     }
 
@@ -227,5 +229,25 @@ La medición debe corresponder a una capacidad de tipo `measurement` del disposi
                 new GetCurrentZoneMeasurementsQuery(organizationId, zoneId, DateTimeOffset.UtcNow));
 
         return Ok(measurements.Select(measurement => MonitoringResourceAssembler.ToResourceFromEntity(measurement)));
+    }
+
+    [HttpGet("devices/{deviceId:guid}/measurements/history")]
+    public async Task<IActionResult> GetDeviceMeasurementHistory(
+        Guid deviceId, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, [FromQuery] int limit = 200)
+    {
+        if (!HttpContext.TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        var measurements = await monitoringQueryService.Handle(
+            new GetDeviceMeasurementHistoryQuery(organizationId, deviceId, from, to, limit));
+        return Ok(measurements.Select(MonitoringResourceAssembler.ToResourceFromEntity));
+    }
+
+    [HttpGet("zones/{zoneId:guid}/measurements/history")]
+    public async Task<IActionResult> GetZoneMeasurementHistory(
+        Guid zoneId, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, [FromQuery] int limit = 200)
+    {
+        if (!HttpContext.TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        var measurements = await monitoringQueryService.Handle(
+            new GetZoneMeasurementHistoryQuery(organizationId, zoneId, from, to, limit));
+        return Ok(measurements.Select(MonitoringResourceAssembler.ToResourceFromEntity));
     }
 }

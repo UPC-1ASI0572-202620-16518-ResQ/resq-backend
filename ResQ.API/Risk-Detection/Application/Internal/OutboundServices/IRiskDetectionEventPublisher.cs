@@ -8,6 +8,9 @@ namespace ResQ.API.Risk_Detection.Application.Internal.OutboundServices;
 /// </summary>
 public interface IRiskDetectionEventPublisher
 {
-    /// <returns>Identifiers of the alerts generated downstream.</returns>
-    Task<IReadOnlyCollection<Guid>> PublishAsync(Guid organizationId, IEnumerable<RiskDetection> detections);
+    Task<RiskPublicationResult> PublishAsync(Guid organizationId, IEnumerable<RiskDetection> detections);
 }
+
+public record RiskPublicationResult(
+    IReadOnlyCollection<Guid> AlertIds,
+    IReadOnlyCollection<Guid> IncidentIds);

@@ -12,6 +12,8 @@ public class DetectionRule
 
     public Guid OrganizationId { get; private set; }
 
+    public Guid? ZoneId { get; private set; }
+
     /// <summary>
     /// RiskType code (e.g. GAS_LEAK, FIRE).
     /// </summary>
@@ -38,7 +40,8 @@ public class DetectionRule
     /// <summary>
     /// Configures a new rule. A rule with a valid condition starts ACTIVE.
     /// </summary>
-    public static DetectionRule Configure(Guid organizationId, string riskTypeCode, string severityCode, DetectionCondition condition)
+    public static DetectionRule Configure(
+        Guid organizationId, string riskTypeCode, string severityCode, DetectionCondition condition, Guid? zoneId = null)
     {
         if (organizationId == Guid.Empty)
             throw new ArgumentException("Organization id is required.");
@@ -52,6 +55,7 @@ public class DetectionRule
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
+            ZoneId = zoneId,
             RiskTypeCode = RiskCodes.NormalizeRiskTypeCode(riskTypeCode),
             SeverityCode = RiskCodes.NormalizeSeverityCode(severityCode),
             Condition = condition,

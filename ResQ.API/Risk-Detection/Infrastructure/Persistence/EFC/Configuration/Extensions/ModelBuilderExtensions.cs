@@ -20,6 +20,8 @@ public static class ModelBuilderExtensions
         builder.Entity<DetectionRule>().HasKey(r => r.Id);
         builder.Entity<DetectionRule>().Property(r => r.Id).ValueGeneratedNever();
         builder.Entity<DetectionRule>().Property(r => r.OrganizationId).IsRequired();
+        builder.Entity<DetectionRule>().Property(r => r.ZoneId);
+        builder.Entity<DetectionRule>().HasIndex(r => new { r.OrganizationId, r.ZoneId });
         builder.Entity<DetectionRule>().Property(r => r.RiskTypeCode).HasMaxLength(50).IsRequired();
         builder.Entity<DetectionRule>().Property(r => r.SeverityCode).HasMaxLength(20).IsRequired();
         builder.Entity<DetectionRule>().Property(r => r.Status).HasConversion<string>().HasMaxLength(16).IsRequired();

@@ -48,7 +48,7 @@ public static class ModelBuilderExtensions
 
         builder.Entity<Building>().Property(b => b.CreatedAt).IsRequired();
         builder.Entity<Building>().Property(b => b.UpdatedAt).IsRequired();
-        builder.Entity<Building>().Property(b => b.Version).IsRequired();
+        builder.Entity<Building>().Property(b => b.Version).IsRequired().IsConcurrencyToken();
 
         // UQ1: (organization_id, building_code)
         builder.Entity<Building>()
@@ -97,6 +97,48 @@ public static class ModelBuilderExtensions
         builder.Entity<Zone>()
             .HasIndex(z => new { z.BuildingId, z.ZoneCode })
             .IsUnique();
+
+        builder.Entity<Floor>().ToTable("Floors");
+        builder.Entity<Floor>().HasKey(floor => floor.Id);
+        builder.Entity<Floor>().Property(floor => floor.Id)
+            .HasColumnName("id").HasColumnType("char(36)")
+            .ValueGeneratedNever();
+        builder.Entity<Floor>().Property(floor => floor.BuildingId)
+            .HasColumnName("building_id").HasColumnType("char(36)")
+            .IsRequired();
+        builder.Entity<Floor>().Property(floor => floor.Label)
+            .HasColumnName("label").HasMaxLength(50).IsRequired();
+        builder.Entity<Floor>().Property(floor => floor.Level)
+            .HasColumnName("level").IsRequired();
+        builder.Entity<Floor>().Property(floor => floor.CreatedAt)
+            .HasColumnName("created_at").HasColumnType("datetime(6)").IsRequired();
+        builder.Entity<Floor>().Property(floor => floor.UpdatedAt)
+            .HasColumnName("updated_at").HasColumnType("datetime(6)").IsRequired();
+        builder.Entity<Building>().HasMany(building => building.Floors).WithOne()
+            .HasForeignKey(floor => floor.BuildingId).OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("fk_floors_buildings_building_id");
+        builder.Entity<Floor>().HasIndex(floor => new { floor.BuildingId, floor.Label })
+            .HasDatabaseName("ix_floors_building_id_label").IsUnique();
+        builder.Entity<Floor>().HasIndex(floor => new { floor.BuildingId, floor.Level })
+            .HasDatabaseName("ix_floors_building_id_level").IsUnique();
+
+        builder.Entity<FloorPlanLayout>().ToTable("FloorPlanLayouts");
+        builder.Entity<FloorPlanLayout>().HasKey(plan => plan.Id);
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.OrganizationId).HasColumnName("organization_id").IsRequired();
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.BuildingId).HasColumnName("building_id").IsRequired();
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.FloorLabel)
+            .HasColumnName("floor_label").HasMaxLength(50).IsRequired();
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.LayoutJson)
+            .HasColumnName("layout_json").HasColumnType("longtext").IsRequired();
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.UpdatedByUserId)
+            .HasColumnName("updated_by_user_id").IsRequired();
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.UpdatedAt)
+            .HasColumnName("updated_at").HasColumnType("datetime(6)").IsRequired();
+        builder.Entity<FloorPlanLayout>().Property(plan => plan.Version)
+            .HasColumnName("version").IsRequired().IsConcurrencyToken();
+        builder.Entity<FloorPlanLayout>().HasIndex(plan => new
+            { plan.OrganizationId, plan.BuildingId, plan.FloorLabel }).IsUnique();
 
         return builder;
     }

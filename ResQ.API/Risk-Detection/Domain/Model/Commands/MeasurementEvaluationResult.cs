@@ -9,4 +9,5 @@ public record MeasurementEvaluationResult(
     Guid MeasurementId,
     int EvaluatedRules,
     IReadOnlyCollection<RiskDetection> RiskDetections,
-    IReadOnlyCollection<Guid> GeneratedAlertIds);
+    IReadOnlyCollection<Guid> GeneratedAlertIds,
+    IReadOnlyCollection<Guid> GeneratedIncidentIds);

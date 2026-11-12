@@ -10,6 +10,7 @@ namespace ResQ.API.Building_Management.Domain.Model.Aggregates;
 public class Building
 {
     private readonly List<Zone> _zones = new();
+    private readonly List<Floor> _floors = new();
 
     public Guid Id { get; private set; }
     public Guid OrganizationId { get; private set; }
@@ -19,6 +20,7 @@ public class Building
     public BuildingAddress Address { get; private set; } = null!;
     public LocationAdministrativeStatus AdministrativeStatus { get; private set; }
     public IReadOnlyCollection<Zone> Zones => _zones.AsReadOnly();
+    public IReadOnlyCollection<Floor> Floors => _floors.OrderBy(floor => floor.Level).ThenBy(floor => floor.Label).ToList().AsReadOnly();
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public long Version { get; private set; }
@@ -104,7 +106,12 @@ public class Building
         if (_zones.Any(z => z.ZoneCode.Value == zoneCode.Value))
             throw new InvalidOperationException($"A zone with code '{zoneCode.Value}' already exists in this building.");
 
-        var zone = new Zone(zoneCode, name, description, floorLabel)
+        var normalizedFloorLabel = Normalize(floorLabel);
+        if (normalizedFloorLabel is not null && !_floors.Any(floor =>
+                string.Equals(floor.Label, normalizedFloorLabel, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"Floor '{normalizedFloorLabel}' does not exist in this building.");
+
+        var zone = new Zone(zoneCode, name, description, normalizedFloorLabel)
         {
             BuildingId = Id
         };
@@ -121,7 +128,51 @@ public class Building
     public void UpdateZone(Guid zoneId, string name, string? description, string? floorLabel)
     {
         var zone = FindZoneOrThrow(zoneId);
-        zone.UpdateDetails(name, description, floorLabel);
+        var normalizedFloorLabel = Normalize(floorLabel);
+        if (normalizedFloorLabel is not null && !_floors.Any(floor =>
+                string.Equals(floor.Label, normalizedFloorLabel, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"Floor '{normalizedFloorLabel}' does not exist in this building.");
+        zone.UpdateDetails(name, description, normalizedFloorLabel);
+        RegisterChange();
+    }
+
+    public Floor AddFloor(string label, int level)
+    {
+        if (_floors.Any(floor => string.Equals(floor.Label, label.Trim(), StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"A floor with label '{label.Trim()}' already exists in this building.");
+        if (_floors.Any(floor => floor.Level == level))
+            throw new InvalidOperationException($"A floor with level '{level}' already exists in this building.");
+        var floor = new Floor(label, level) { BuildingId = Id };
+        _floors.Add(floor);
+        RegisterChange();
+        return floor;
+    }
+
+    public void UpdateFloor(Guid floorId, string label, int level)
+    {
+        var floor = _floors.FirstOrDefault(candidate => candidate.Id == floorId)
+                    ?? throw new KeyNotFoundException("Floor not found.");
+        var normalized = label.Trim();
+        if (_floors.Any(candidate => candidate.Id != floorId &&
+            string.Equals(candidate.Label, normalized, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"A floor with label '{normalized}' already exists in this building.");
+        if (_floors.Any(candidate => candidate.Id != floorId && candidate.Level == level))
+            throw new InvalidOperationException($"A floor with level '{level}' already exists in this building.");
+        var previousLabel = floor.Label;
+        floor.Update(normalized, level);
+        foreach (var zone in _zones.Where(zone =>
+                     string.Equals(zone.FloorLabel, previousLabel, StringComparison.OrdinalIgnoreCase)))
+            zone.UpdateFloorLabel(normalized);
+        RegisterChange();
+    }
+
+    public void RemoveFloor(Guid floorId)
+    {
+        var floor = _floors.FirstOrDefault(candidate => candidate.Id == floorId)
+                    ?? throw new KeyNotFoundException("Floor not found.");
+        if (_zones.Any(zone => string.Equals(zone.FloorLabel, floor.Label, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("A floor with zones cannot be deleted. Move or remove its zones first.");
+        _floors.Remove(floor);
         RegisterChange();
     }
 

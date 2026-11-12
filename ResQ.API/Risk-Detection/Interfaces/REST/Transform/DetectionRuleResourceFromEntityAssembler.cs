@@ -10,6 +10,7 @@ public static class DetectionRuleResourceFromEntityAssembler
     {
         return new DetectionRuleResource(
             entity.Id,
+            entity.ZoneId,
             entity.RiskTypeCode,
             entity.SeverityCode,
             new DetectionConditionResource(

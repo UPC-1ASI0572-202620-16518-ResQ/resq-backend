@@ -7,4 +7,7 @@ public record RegisterBuildingCommand(
     string BuildingCode,
     string Name,
     string? Description,
-    BuildingAddress Address);
+    BuildingAddress Address,
+    IReadOnlyCollection<FloorDefinition>? Floors = null);
+
+public record FloorDefinition(string Label, int Level);

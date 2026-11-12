@@ -5,6 +5,8 @@ using ResQ.API.Alert_Management.Interfaces.REST.Resources;
 using ResQ.API.Alert_Management.Interfaces.REST.Transform;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using Swashbuckle.AspNetCore.Annotations;
+using ResQ.API.IAM.Domain.Model.Aggregates;
+using ResQ.API.IAM.Domain.Model.ValueObjects;
 
 namespace ResQ.API.Alert_Management.Interfaces.REST;
 
@@ -198,6 +200,8 @@ El usuario que decide se toma del token.
         [FromBody] DecideResponseAuthorizationResource resource)
     {
         if (!HttpContext.TryGetOrganizationId(out var organizationId)) return Unauthorized();
+
+        if (HttpContext.Items["User"] is not User { Role: Roles.Volunteer }) return Forbid();
 
         var userId = HttpContext.GetCurrentUserId();
         if (userId is null) return Unauthorized();

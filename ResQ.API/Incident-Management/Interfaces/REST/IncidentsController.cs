@@ -5,6 +5,10 @@ using ResQ.API.Incident_Management.Domain.Services;
 using ResQ.API.Incident_Management.Interfaces.REST.Resources;
 using ResQ.API.Incident_Management.Interfaces.REST.Transform;
 using Swashbuckle.AspNetCore.Annotations;
+using ResQ.API.IAM.Domain.Model.Aggregates;
+using ResQ.API.IAM.Domain.Model.ValueObjects;
+using ResQ.API.Incident_Management.Domain.Model.Commands;
+using ResQ.API.Incident_Management.Domain.Model.ValueObjects;
 
 namespace ResQ.API.Incident_Management.Interfaces.REST;
 
@@ -126,7 +130,8 @@ Retorna la información actual del incidente, incluyendo:
     [SwaggerResponse(StatusCodes.Status404NotFound, "Incident not found")]
     public async Task<IActionResult> GetIncidentById(Guid id)
     {
-        var query = new GetIncidentByIdQuery(id);
+        if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        var query = new GetIncidentByIdQuery(organizationId, id);
         var incident = await incidentQueryService.Handle(query);
         
         if (incident == null)
@@ -145,7 +150,8 @@ Retorna la información actual del incidente, incluyendo:
     [SwaggerResponse(StatusCodes.Status200OK, "Incident history")]
     public async Task<IActionResult> GetIncidents([FromQuery] Guid? zoneId)
     {
-        var query = new GetHistoricalIncidentsQuery(zoneId == Guid.Empty ? null : zoneId, null, null, null);
+        if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        var query = new GetHistoricalIncidentsQuery(organizationId, zoneId == Guid.Empty ? null : zoneId, null, null, null);
         var incidents = await incidentQueryService.Handle(query);
 
         return Ok(incidents.Select(IncidentResourceFromEntityAssembler.ToResourceFromEntity));
@@ -196,9 +202,12 @@ Retorna el incidente con su nuevo estado.",
     [SwaggerResponse(StatusCodes.Status409Conflict, "Status transition not allowed")]
     public async Task<IActionResult> ChangeStatus(Guid id, [FromBody] UpdateIncidentStatusResource resource)
     {
+        if (!TryGetOperationalContext(out var organizationId, out var user)) return Forbid();
         return await ExecuteAsync(async () =>
         {
-            var command = UpdateIncidentStatusCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            if (!Enum.TryParse<EIncidentStatus>(resource.Status, true, out var status))
+                return BadRequest(new { message = "Invalid incident status." });
+            var command = new ChangeIncidentStatusAsCurrentUserCommand(organizationId, id, user.Id, status);
             var incident = await incidentCommandService.Handle(command);
 
             if (incident == null)
@@ -251,6 +260,7 @@ Retorna el incidente actualizado con su nuevo estado y responsable asignado.",
     [SwaggerResponse(StatusCodes.Status409Conflict, "The incident is not active")]
     public async Task<IActionResult> AssignIncident(Guid id, [FromBody] AssignIncidentResource resource)
     {
+        if (!TryGetOperationalContext(out _, out _)) return Forbid();
         return await ExecuteAsync(async () =>
         {
             var command = AssignIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
@@ -304,9 +314,11 @@ Retorna el incidente actualizado con estado Resolved.",
     [SwaggerResponse(StatusCodes.Status409Conflict, "The incident cannot be resolved in its current status")]
     public async Task<IActionResult> ResolveIncident(Guid id, [FromBody] ResolveIncidentResource resource)
     {
+        if (!TryGetOperationalContext(out var organizationId, out var user)) return Forbid();
         return await ExecuteAsync(async () =>
         {
-            var command = ResolveIncidentCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+            var command = new ResolveIncidentAsCurrentUserCommand(
+                organizationId, id, user.Id, resource.ResolutionNotes);
             var incident = await incidentCommandService.Handle(command);
 
             if (incident == null)
@@ -314,6 +326,71 @@ Retorna el incidente actualizado con estado Resolved.",
 
             return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident));
         });
+    }
+
+    [HttpPut("{id:guid}/assign/me")]
+    [SwaggerOperation(Summary = "Assume an incident with the authenticated identity")]
+    public async Task<IActionResult> AssignToMe(Guid id)
+    {
+        if (!TryGetOperationalContext(out var organizationId, out var user)) return Forbid();
+        return await ExecuteAsync(async () =>
+        {
+            var incident = await incidentCommandService.Handle(
+                new AssignIncidentToCurrentUserCommand(organizationId, id, user.Id));
+            return Ok(IncidentResourceFromEntityAssembler.ToResourceFromEntity(incident!));
+        });
+    }
+
+    [HttpGet("{id:guid}/actions")]
+    [HttpGet("{id:guid}/human-actions")]
+    public async Task<IActionResult> GetHumanActions(Guid id)
+    {
+        if (!TryGetOrganizationId(out var organizationId)) return Unauthorized();
+        var incident = await incidentQueryService.Handle(new GetIncidentByIdQuery(organizationId, id));
+        if (incident is null) return NotFound();
+        return Ok(incident.HumanActions.OrderBy(action => action.PerformedAt).Select(action =>
+            new IncidentHumanActionResource(action.Id, action.UserId, action.ActionCode, action.Notes, action.PerformedAt)));
+    }
+
+    [HttpPost("{id:guid}/actions")]
+    [HttpPost("{id:guid}/human-actions")]
+    public async Task<IActionResult> RecordHumanAction(Guid id, [FromBody] RecordHumanActionResource resource)
+    {
+        if (!TryGetOperationalContext(out var organizationId, out var user)) return Forbid();
+        return await ExecuteAsync(async () =>
+        {
+            var action = await incidentCommandService.Handle(new RecordIncidentHumanActionCommand(
+                organizationId, id, user.Id, resource.ActionCode, resource.Notes));
+            return StatusCode(StatusCodes.Status201Created,
+                new IncidentHumanActionResource(action.Id, action.UserId, action.ActionCode, action.Notes, action.PerformedAt));
+        });
+    }
+
+    [HttpPost("{id:guid}/verify-safe")]
+    public async Task<IActionResult> VerifySafe(Guid id)
+    {
+        if (!TryGetOperationalContext(out var organizationId, out var user)) return Forbid();
+        return await ExecuteAsync(async () =>
+        {
+            var verification = await incidentCommandService.Handle(
+                new VerifyIncidentSafetyCommand(organizationId, id, user.Id));
+            return Ok(new IncidentSafetyVerificationResource(
+                verification.Id, verification.VerifiedByUserId, verification.Safe, verification.Reason,
+                verification.DeviceId, verification.MeasurementId, verification.MeasuredValue,
+                verification.MeasuredAt, verification.RuleSnapshot, verification.VerifiedAt));
+        });
+    }
+
+    private bool TryGetOrganizationId(out Guid organizationId)
+    {
+        organizationId = HttpContext.Items["OrganizationId"] is Guid value ? value : Guid.Empty;
+        return organizationId != Guid.Empty;
+    }
+
+    private bool TryGetOperationalContext(out Guid organizationId, out User user)
+    {
+        user = HttpContext.Items["User"] as User ?? null!;
+        return TryGetOrganizationId(out organizationId) && user is not null && user.Role == Roles.Volunteer;
     }
 
     /// <summary>
@@ -339,3 +416,5 @@ Retorna el incidente actualizado con estado Resolved.",
         }
     }
 }
+
+public record RecordHumanActionResource(string ActionCode, string? Notes);

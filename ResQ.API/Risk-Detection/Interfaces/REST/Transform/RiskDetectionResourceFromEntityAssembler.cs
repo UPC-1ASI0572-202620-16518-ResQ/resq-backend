@@ -45,6 +45,7 @@ public static class RiskDetectionResourceFromEntityAssembler
             result.EvaluatedRules,
             result.RiskDetections.Count > 0,
             result.RiskDetections.Select(ToResourceFromEntity).ToList(),
-            result.GeneratedAlertIds);
+            result.GeneratedAlertIds,
+            result.GeneratedIncidentIds);
     }
 }

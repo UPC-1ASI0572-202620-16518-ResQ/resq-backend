@@ -59,4 +59,5 @@ public record MeasurementEvaluationResource(
     int EvaluatedRules,
     bool RiskDetected,
     IEnumerable<RiskDetectionResource> RiskDetections,
-    IEnumerable<Guid> GeneratedAlertIds);
+    IEnumerable<Guid> GeneratedAlertIds,
+    IEnumerable<Guid> GeneratedIncidentIds);

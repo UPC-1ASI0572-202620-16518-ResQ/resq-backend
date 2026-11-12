@@ -21,7 +21,7 @@ public class MonitoringCommandService(
     IMonitoringStateService monitoringStateService,
     IUnitOfWork unitOfWork) : IMonitoringCommandService
 {
-    public async Task<(Measurement Measurement, IReadOnlyCollection<Guid> RiskDetectionIds)> Handle(RecordMeasurementCommand command)
+    public async Task<(Measurement Measurement, RiskEvaluationOutcome Evaluation)> Handle(RecordMeasurementCommand command)
     {
         var device = await devicesContextFacade.GetDeviceCatalogEntry(command.OrganizationId, command.DeviceId);
 
@@ -106,7 +106,7 @@ public class MonitoringCommandService(
 
         await unitOfWork.CompleteAsync();
 
-        var riskDetectionIds = await riskDetectionContextFacade.EvaluateMeasurementAsync(
+        var evaluation = await riskDetectionContextFacade.EvaluateMeasurementAsync(
             command.OrganizationId,
             measurement.Id,
             command.DeviceId,
@@ -114,16 +114,16 @@ public class MonitoringCommandService(
             command.Value,
             command.MeasuredAt);
 
-        if (zoneState is not null && riskDetectionIds.Count > 0)
+        if (zoneState is not null && evaluation.RiskDetectionIds.Count > 0)
         {
             monitoringStateService.MarkRisk(
                 zoneState,
-                riskDetectionIds.First(),
+                evaluation.RiskDetectionIds.First(),
                 "RISK_ACTIVE");
 
             await unitOfWork.CompleteAsync();
         }
 
-        return (measurement, riskDetectionIds);
+        return (measurement, evaluation);
     }
 }

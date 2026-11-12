@@ -12,4 +12,14 @@ public interface IIncidentCommandService
     Task<Incident?> Handle(ChangeIncidentStatusCommand command);
 
     Task<Incident?> Handle(ResolveIncidentCommand command);
+
+    Task<Incident?> Handle(AssignIncidentToCurrentUserCommand command);
+
+    Task<IncidentHumanAction> Handle(RecordIncidentHumanActionCommand command);
+
+    Task<IncidentSafetyVerification> Handle(VerifyIncidentSafetyCommand command);
+
+    Task<Incident?> Handle(ResolveIncidentAsCurrentUserCommand command);
+
+    Task<Incident?> Handle(ChangeIncidentStatusAsCurrentUserCommand command);
 }
