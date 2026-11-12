@@ -30,3 +30,26 @@ Desarrollar worker idempotente con cursor persistente por canal y control de con
 
 ## Despliegue
 Abrir PR y ejecutar build/tests; configurar variables en Render antes de desplegar. Verificar el backend y la UI contra lecturas reales. No probar con la clave en parámetros de URL enviados al navegador.
+
+
+## Worker incorporado (fase 2)
+`ThingSpeakImportWorker` fue agregado y registrado en DI. **Desactivado por defecto**. Lee periódicamente las entradas (30 s por defecto), mapea seis campos y usa `IMonitoringCommandService` para escribir en Monitoring y evaluar riesgos. Comprueba si ya existe medición del mismo dispositivo, variable y fecha antes de agregarla.
+
+Configurar estas variables **solo después de identificar los IDs reales y validar capacidades del dispositivo**:
+
+| Variable Render | Valor |
+|---|---|
+| `ThingSpeak__Enabled` | `true` (activar solo tras la validación) |
+| `ThingSpeak__OrganizationId` | GUID real de la organización |
+| `ThingSpeak__DeviceId` | GUID real del dispositivo activo |
+| `ThingSpeak__PollIntervalSeconds` | `30` |
+| `ThingSpeak__ImportHistorical` | `false` (al iniciar toma la primera lectura como referencia y empieza con nuevas) |
+
+**Advertencias antes de producción**:
+- El control de duplicados se basa en el trío `DeviceId + VariableType + MeasuredAt`, no en una clave única transaccional. Este worker es para **una sola instancia**. Para varios procesos se necesita bloqueo distribuido + índice único/cursor persistente con `entry_id/field`.
+- Si Monitoring guarda la medida pero Risk Detection falla, el siguiente sondeo detecta la medida existente y no reevaluará automáticamente ese error parcial. Debe corregirse antes de producción crítica.
+- En reinicios se establece un nuevo baseline de entradas si `ImportHistorical=false`; pueden perderse entradas del intervalo de reinicio. Para procesamiento fiable durante caídas, usar cursor durable y recuperación de lotes.
+- El cliente usa el encabezado `THINGSPEAKAPIKEY`. Validar conectividad/compatibilidad con el servidor real y tests de integración.
+- No se ha ejecutado `dotnet build` ni prueba contra Render desde este entorno; **no se debe hacer merge a main o desplegar sin verificación**.
+- Mientras no se arregle el registro/login de usuarios, no se han podido verificar `OrganizationId`, `DeviceId`, capacidades, autenticación o reglas reales de riesgos.
+- Si el endpoint de registro del usuario sigue dando HTTP 500, esa incidencia es independiente del importador y debe resolverse antes de validar el recorrido en frontend.
