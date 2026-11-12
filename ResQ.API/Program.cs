@@ -51,10 +51,7 @@ builder.Services.AddControllers(options => options.Conventions.Add(new KebabCase
 builder.AddDatabaseServices();
 
 // Open API Configuration (Swagger)
-if (builder.Environment.IsDevelopment())
-{
-    builder.AddOpenApiDocumentationServices();
-}
+builder.AddOpenApiDocumentationServices();
 
 // Shared Context Services
 builder.AddSharedContextServices();
@@ -104,10 +101,7 @@ app.UseGlobalExceptionHandling();
 app.UseCors("CorsPolicy");
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseOpenApiDocumentation();
-}
+app.UseOpenApiDocumentation();
 
 //app.UseHttpsRedirection();
 
