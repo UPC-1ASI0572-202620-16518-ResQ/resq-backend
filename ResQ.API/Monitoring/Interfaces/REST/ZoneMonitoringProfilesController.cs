@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.Building_Management.Interfaces.ACL;
 using ResQ.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
+using ResQ.API.Risk_Detection.Domain.Model.Aggregates;
 using ResQ.API.Risk_Detection.Domain.Model.Commands;
 using ResQ.API.Risk_Detection.Domain.Model.ValueObjects;
 using ResQ.API.Risk_Detection.Domain.Repositories;
@@ -44,17 +45,33 @@ public class ZoneMonitoringProfilesController(
         if (resource.Rules is null || resource.Rules.Count == 0)
             return BadRequest(new { message = "At least one effective rule is required." });
 
+        List<ConfigureDetectionRuleCommand> commands;
+        try
+        {
+            commands = resource.Rules.Select(item =>
+            {
+                var comparisonOperator = EnumCode.Parse<EComparisonOperator>(item.Operator, "operator");
+                var condition = DetectionCondition.Create(item.VariableType, comparisonOperator, item.Threshold);
+                _ = DetectionRule.Configure(
+                    organizationId, item.RiskTypeCode, item.SeverityCode, condition, zoneId);
+                return new ConfigureDetectionRuleCommand(
+                    organizationId, item.RiskTypeCode, item.SeverityCode, item.VariableType,
+                    comparisonOperator, item.Threshold, zoneId);
+            }).ToList();
+        }
+        catch (ArgumentException error)
+        {
+            return BadRequest(new { message = error.Message });
+        }
+
+        // Replacement begins only after every incoming rule has passed domain validation.
         foreach (var existing in await ruleRepository.FindByZoneAsync(organizationId, zoneId))
             await ruleCommandService.Handle(new ChangeDetectionRuleStatusCommand(organizationId, existing.Id, false));
 
         var created = new List<object>();
-        foreach (var item in resource.Rules)
+        foreach (var command in commands)
         {
-            if (!Enum.TryParse<EComparisonOperator>(item.Operator, true, out var comparisonOperator))
-                return BadRequest(new { message = $"Invalid operator '{item.Operator}'." });
-            var rule = await ruleCommandService.Handle(new ConfigureDetectionRuleCommand(
-                organizationId, item.RiskTypeCode, item.SeverityCode, item.VariableType,
-                comparisonOperator, item.Threshold, zoneId));
+            var rule = await ruleCommandService.Handle(command);
             created.Add(DetectionRuleResourceFromEntityAssembler.ToResourceFromEntity(rule));
         }
 
