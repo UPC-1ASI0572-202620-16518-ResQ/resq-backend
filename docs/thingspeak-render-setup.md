@@ -14,7 +14,9 @@ En Render > servicio de backend > Environment:
 | `ThingSpeak__ReadApiKey` | Clave privada de lectura (configurar en Render; no compartir ni versionar) |
 | `ThingSpeak__ChannelId` | `3577021` (opcional: valor predeterminado del cliente) |
 
-**No se debe activar un importador de fondo todavía**: la configuración de la clave no significa que el código de esta rama se haya desplegado. El código de `main` no contiene estos cambios.
+**No se debe activar el importador solo por configurar la clave**. `main` ya contiene el worker,
+pero permanece desactivado por defecto y requiere los identificadores y capacidades reales del
+entorno donde se ejecutará.
 
 ## Prerrequisito para la ingesta
 Un dispositivo físico ResQ existente en el backend, con estado **active**, asociado a una edificación y preferentemente a una zona, debe tener las capacidades **measurement** y unidades compatibles con los seis campos definidos en `ThingSpeakMeasurementMapper`.
@@ -25,8 +27,11 @@ Usar Swagger del servicio desplegado y autenticación del sistema:
 3. Si el dispositivo no existe, registrar mediante `POST /api/v1/devices` y asociarlo a un `buildingId` real. El backend crea dispositivos inicialmente inactivos; activarlos con la operación de estado.
 4. Solo una vez confirmado el GUID del dispositivo, configurar el mapeo en la ingesta. No usar IDs de ejemplo.
 
-## Próximo cambio de código
-Desarrollar worker idempotente con cursor persistente por canal y control de concurrencia para despliegues múltiples. Cada entrada debe procesarse una sola vez o tener deduplicación por campo; reutilizar `IMonitoringCommandService` para mantener la evaluación de riesgos. No almacenar claves en código, body o logs.
+## Endurecimiento futuro
+Para despliegues múltiples o ingesta crítica todavía se necesita un cursor persistente por canal,
+un índice único por medición y control de concurrencia distribuido. El worker actual reutiliza
+`IMonitoringCommandService`, pero su comprobación previa no constituye idempotencia transaccional.
+No almacenar claves en código, body o logs.
 
 ## Despliegue
 Abrir PR y ejecutar build/tests; configurar variables en Render antes de desplegar. Verificar el backend y la UI contra lecturas reales. No probar con la clave en parámetros de URL enviados al navegador.
@@ -50,6 +55,11 @@ Configurar estas variables **solo después de identificar los IDs reales y valid
 - Si Monitoring guarda la medida pero Risk Detection falla, el siguiente sondeo detecta la medida existente y no reevaluará automáticamente ese error parcial. Debe corregirse antes de producción crítica.
 - En reinicios se establece un nuevo baseline de entradas si `ImportHistorical=false`; pueden perderse entradas del intervalo de reinicio. Para procesamiento fiable durante caídas, usar cursor durable y recuperación de lotes.
 - El cliente usa el encabezado `THINGSPEAKAPIKEY`. Validar conectividad/compatibilidad con el servidor real y tests de integración.
-- No se ha ejecutado `dotnet build` ni prueba contra Render desde este entorno; **no se debe hacer merge a main o desplegar sin verificación**.
-- Mientras no se arregle el registro/login de usuarios, no se han podido verificar `OrganizationId`, `DeviceId`, capacidades, autenticación o reglas reales de riesgos.
-- Si el endpoint de registro del usuario sigue dando HTTP 500, esa incidencia es independiente del importador y debe resolverse antes de validar el recorrido en frontend.
+- La integración local fue comprobada con una base de desarrollo y un ESP32 físico. Esa evidencia
+  no valida los GUID, el esquema ni los secretos de Render.
+- Antes de activar producción: respaldar la base, confirmar el esquema, obtener el `OrganizationId`
+  mediante una sesión autenticada y consultar el dispositivo con Device Management. No copiar la
+  base local ni reutilizar sus GUID sin verificar que existan en producción.
+- Empezar con `ThingSpeak__Enabled=false`, `ThingSpeak__ImportHistorical=false` y una sola instancia.
+  Activar después de verificar las seis capacidades/unidades y observar una lectura física nueva.
+- No usar en producción reglas temporales de laboratorio como `TEMPERATURE_TEST >= 26`.
